@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m zipfile:*)",
+      "Bash(unzip:*)",
+      "Bash(for docx in *.docx)",
+      "Bash(do echo \"==== $docx ====\")",
+      "Bash(done)"
+    ]
+  }
+}
