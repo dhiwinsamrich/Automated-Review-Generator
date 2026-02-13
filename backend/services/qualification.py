@@ -1,0 +1,65 @@
+"""
+Rating qualification logic.
+
+Determines whether a form submission qualifies for AI review generation
+based on average rating threshold and testimonial consent.
+"""
+
+from backend.config import get_settings
+from backend.utils.logger import logger
+
+
+def calculate_average(ratings: list) -> float:
+    """
+    Calculate average rating from Q1-Q8 values (1-10 scale).
+
+    Filters out None and empty values before calculating.
+
+    Args:
+        ratings: List of rating values (may contain None).
+
+    Returns:
+        Average rating rounded to 2 decimal places, or 0.0 if no valid ratings.
+    """
+    valid_ratings = []
+    for r in ratings:
+        if r is not None and str(r).strip() != "":
+            try:
+                valid_ratings.append(float(r))
+            except (ValueError, TypeError):
+                continue
+
+    if not valid_ratings:
+        return 0.0
+
+    avg = sum(valid_ratings) / len(valid_ratings)
+    return round(avg, 2)
+
+
+def check_qualification(avg_rating: float, consent: str) -> bool:
+    """
+    Check if a submission meets the qualification threshold.
+
+    Qualification requires BOTH:
+    - Average rating >= configured threshold (default: 8.0)
+    - Q9 testimonial consent = "Yes"
+
+    Args:
+        avg_rating: Calculated average from Q1-Q8.
+        consent: Q9 response string ("Yes" or "No").
+
+    Returns:
+        True if submission qualifies for review generation.
+    """
+    settings = get_settings()
+    threshold = settings.RATING_THRESHOLD
+
+    consent_given = consent.strip().lower() == "yes"
+    meets_threshold = avg_rating >= threshold
+
+    logger.info(
+        f"Qualification check: avg={avg_rating}, threshold={threshold}, "
+        f"consent={consent_given} → qualified={meets_threshold and consent_given}"
+    )
+
+    return meets_threshold and consent_given
