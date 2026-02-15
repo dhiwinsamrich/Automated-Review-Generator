@@ -282,6 +282,13 @@ async def log_audit_event(
         reference: Reference ID (e.g., row number).
         details: Human-readable event description.
     """
+    await asyncio.to_thread(_log_audit_event_sync, sheet_id, event_type, reference, details)
+
+
+def _log_audit_event_sync(
+    sheet_id: str, event_type: str, reference: str, details: str
+) -> None:
+    """Synchronous implementation of audit logging."""
     if not sheet_id:
         return
 
