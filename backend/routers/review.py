@@ -39,7 +39,7 @@ async def get_review(token: str):
             detail="FORM_RESPONSES_SHEET_ID not configured",
         )
 
-    review_data = sheets_service.get_review_by_token(sheet_id, token)
+    review_data = await sheets_service.get_review_by_token(sheet_id, token)
 
     if not review_data:
         logger.warning(f"Review not found for token: {token[:8]}...")
@@ -47,6 +47,24 @@ async def get_review(token: str):
             status_code=404,
             detail="Review not found or link has expired.",
         )
+
+    # Check token expiration
+    sent_at_str = review_data.get("sent_at", "")
+    if sent_at_str:
+        try:
+            sent_at = datetime.strptime(sent_at_str, "%Y-%m-%d %H:%M:%S")
+            days_elapsed = (datetime.now() - sent_at).days
+            if days_elapsed > settings.CONSENT_TOKEN_EXPIRY_DAYS:
+                logger.warning(
+                    f"Token expired for {token[:8]}... "
+                    f"({days_elapsed} days > {settings.CONSENT_TOKEN_EXPIRY_DAYS})"
+                )
+                raise HTTPException(
+                    status_code=410,
+                    detail="This review link has expired. Please contact us for a new one.",
+                )
+        except ValueError:
+            pass  # If date parsing fails, allow access
 
     return ReviewResponse(
         draft_text=review_data.get("draft_text", ""),
@@ -70,21 +88,19 @@ async def mark_review_copied(token: str):
     settings = get_settings()
     sheet_id = settings.FORM_RESPONSES_SHEET_ID
 
-    review_data = sheets_service.get_review_by_token(sheet_id, token)
+    review_data = await sheets_service.get_review_by_token(sheet_id, token)
 
     if not review_data:
         raise HTTPException(status_code=404, detail="Review not found")
 
     row = review_data["row"]
 
-    from datetime import datetime
-
-    sheets_service.update_submission_row(sheet_id, row, {
+    await sheets_service.update_submission_row(sheet_id, row, {
         "status": SubmissionStatus.COPIED.value,
         "copied_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     })
 
-    sheets_service.log_audit_event(
+    await sheets_service.log_audit_event(
         sheet_id, "REVIEW_COPIED", f"row_{row}",
         "Client copied review text from landing page."
     )
