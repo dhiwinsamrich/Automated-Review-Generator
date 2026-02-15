@@ -56,6 +56,11 @@ async def lookup_client_by_email(email: str) -> ClientData:
     Returns:
         ClientData with name, company, services, WhatsApp number.
     """
+    return await asyncio.to_thread(_lookup_client_by_email_sync, email)
+
+
+def _lookup_client_by_email_sync(email: str) -> ClientData:
+    """Synchronous implementation of CRM lookup."""
     settings = get_settings()
 
     if not settings.CRM_SHEET_ID:
