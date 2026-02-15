@@ -39,7 +39,8 @@ async def send_consent_email(
     Returns:
         True if email sent successfully, False otherwise.
     """
-    settings = get_settings()
+    safe_name = _esc(client_name)
+    safe_draft = _esc(draft_text)
 
     subject = "Your Review Draft for bdcode — Quick Action Needed"
 
@@ -51,7 +52,7 @@ async def send_consent_email(
         </div>
 
         <div style="background: #ffffff; padding: 30px; border: 1px solid #e9ecef;">
-            <h2 style="color: #1F4E79; margin-top: 0;">Hi {client_name},</h2>
+            <h2 style="color: #1F4E79; margin-top: 0;">Hi {safe_name},</h2>
 
             <p style="color: #333; line-height: 1.6;">
                 Thank you for your feedback on our recent project! Based on your
@@ -61,7 +62,7 @@ async def send_consent_email(
             <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;
                         border-left: 4px solid #1F4E79; margin: 20px 0;">
                 <p style="font-style: italic; margin: 0; color: #333; line-height: 1.6;">
-                    "{draft_text}"
+                    "{safe_draft}"
                 </p>
             </div>
 
@@ -74,7 +75,7 @@ async def send_consent_email(
                    style="display: inline-block; background: #4285F4; color: white;
                           padding: 14px 32px; text-decoration: none; border-radius: 8px;
                           font-weight: 600; font-size: 16px;">
-                    📋 Copy & Post Review
+                    Copy & Post Review
                 </a>
             </div>
         </div>
