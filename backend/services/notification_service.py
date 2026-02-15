@@ -31,8 +31,6 @@ async def send_review_notification(
     Returns:
         NotificationResult with delivery method and success status.
     """
-    settings = get_settings()
-
     # Step 1: Try WhatsApp if number is available
     if client_data.whatsapp:
         logger.info(f"Attempting WhatsApp delivery to {client_data.whatsapp}")
@@ -148,14 +146,16 @@ async def send_low_rating_alert(
     client_data: ClientData,
     avg_rating: float,
     open_feedback: str = "",
+    reason: str = "low_rating",
 ) -> bool:
     """
-    Send internal alert email for low-rated submissions.
+    Send internal alert email for low-rated or consent-declined submissions.
 
     Args:
         client_data: Client details.
-        avg_rating: Average rating (below threshold).
+        avg_rating: Average rating.
         open_feedback: Q10 open-text feedback.
+        reason: Alert reason — 'low_rating', 'consent_declined', or 'negative_sentiment'.
 
     Returns:
         True if alert sent successfully.
@@ -165,6 +165,7 @@ async def send_low_rating_alert(
         company=client_data.company,
         avg_rating=avg_rating,
         open_feedback=open_feedback or "",
+        reason=reason,
     )
 
 
