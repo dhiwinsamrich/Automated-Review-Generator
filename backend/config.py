@@ -47,6 +47,15 @@ class Settings(BaseSettings):
     # --- Webhook Security ---
     WEBHOOK_SECRET: str = ""
 
+    # --- Token Expiry ---
+    CONSENT_TOKEN_EXPIRY_DAYS: int = 14
+
+    # --- Phone Number ---
+    DEFAULT_COUNTRY_CODE: str = "+91"
+
+    # --- Environment ---
+    ENVIRONMENT: str = "development"  # development | production
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
