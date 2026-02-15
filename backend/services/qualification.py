@@ -44,6 +44,17 @@ def calculate_average(ratings: list) -> float:
     return round(avg, 2)
 
 
+def meets_rating_threshold(avg_rating: float) -> bool:
+    """Check if the average rating meets the configured threshold."""
+    settings = get_settings()
+    return avg_rating >= settings.RATING_THRESHOLD
+
+
+def has_testimonial_consent(consent: str) -> bool:
+    """Check if the client gave testimonial consent (Q9 = Yes)."""
+    return consent.strip().lower() == "yes"
+
+
 def check_qualification(avg_rating: float, consent: str) -> bool:
     """
     Check if a submission meets the qualification threshold.
