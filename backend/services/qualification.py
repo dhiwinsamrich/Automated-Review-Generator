@@ -79,4 +79,31 @@ def check_qualification(avg_rating: float, consent: str) -> bool:
         f"→ qualified={threshold_met and consent_given}"
     )
 
-    return meets_threshold and consent_given
+    return threshold_met and consent_given
+
+
+def has_negative_sentiment(open_feedback: str) -> bool:
+    """
+    Basic keyword-based check for negative sentiment in open feedback.
+
+    Used to flag cases where a client gives high ratings but writes
+    negative comments (BRD edge case EC-01).
+
+    Args:
+        open_feedback: Q10 open-text feedback.
+
+    Returns:
+        True if negative keywords are detected.
+    """
+    if not open_feedback:
+        return False
+
+    text = open_feedback.lower()
+    for keyword in _NEGATIVE_KEYWORDS:
+        if keyword in text:
+            logger.warning(
+                f"Negative sentiment detected in open feedback: '{keyword}'"
+            )
+            return True
+
+    return False
