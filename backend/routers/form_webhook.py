@@ -30,27 +30,41 @@ router = APIRouter(prefix="/api/webhook", tags=["Webhooks"])
 
 
 @router.post("/form", response_model=WebhookResponse)
-async def handle_form_submission(submission: FormSubmissionData,
+async def handle_form_submission(
+    submission: FormSubmissionData,
     x_webhook_secret: str = Header(default="", alias="X-Webhook-Secret"),
 ):
     """
     Process a new Google Form submission.
 
     Pipeline:
-    1. Look up client in CRM sheet by email
-    2. Calculate average rating from Q1-Q8
-    3. Check qualification (avg >= threshold AND consent = Yes)
-    4. If qualified: generate AI draft → send WhatsApp/email
-    5. If not qualified: send internal alert
-    6. Update form responses sheet with status
+    1. Validate webhook secret
+    2. Check for duplicate submissions
+    3. Look up client in CRM sheet by email
+    4. Calculate average rating from Q1-Q8
+    5. Check qualification (avg >= threshold AND consent = Yes)
+    6. If qualified: generate AI draft → send WhatsApp/email
+    7. If not qualified: send internal alert (context-aware)
+    8. Update form responses sheet with status
 
     Args:
         submission: Form data forwarded by Google Apps Script.
+        x_webhook_secret: Secret header for webhook authentication.
 
     Returns:
         WebhookResponse with processing result.
     """
     settings = get_settings()
+
+    # Step 0: Validate webhook secret
+    if settings.WEBHOOK_SECRET:
+        if x_webhook_secret != settings.WEBHOOK_SECRET:
+            logger.warning(
+                f"Webhook auth failed for row {submission.row_number} "
+                f"from {submission.email}"
+            )
+            raise HTTPException(status_code=403, detail="Invalid webhook secret")
+
     sheet_id = submission.sheet_id or settings.FORM_RESPONSES_SHEET_ID
     row = submission.row_number
 
