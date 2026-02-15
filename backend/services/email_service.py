@@ -4,12 +4,19 @@ Email service for fallback notifications and internal alerts.
 Uses aiosmtplib for async SMTP email delivery.
 """
 
+import html as html_lib
+
 import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 from backend.config import get_settings
 from backend.utils.logger import logger
+
+
+def _esc(value: str) -> str:
+    """Escape a string for safe insertion into HTML email templates."""
+    return html_lib.escape(str(value)) if value else ""
 
 
 async def send_consent_email(
