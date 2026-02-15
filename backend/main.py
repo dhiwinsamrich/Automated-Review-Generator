@@ -31,6 +31,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"Token expiry: {settings.CONSENT_TOKEN_EXPIRY_DAYS} days")
     logger.info(f"Gemini API: {'configured' if settings.GEMINI_API_KEY else 'missing'}")
     logger.info(f"WhatsApp API: {'configured' if settings.WHATSAPP_ACCESS_TOKEN else 'missing'}")
+    logger.info(f"WhatsApp template: {settings.WHATSAPP_TEMPLATE_NAME or 'not set (will use free-form)'}")
     logger.info(f"SMTP: {'configured' if settings.SMTP_USERNAME else 'missing'}")
     logger.info(f"CRM Sheet: {'configured' if settings.CRM_SHEET_ID else 'missing'}")
     logger.info(f"GBP URL: {'configured' if settings.GBP_REVIEW_URL else 'missing'}")
@@ -58,14 +59,15 @@ app = FastAPI(
 
 settings = get_settings()
 
-# In production, only allow the configured frontend URL
-# In development, also allow common localhost origins
-allowed_origins = [settings.FRONTEND_URL]
+# Always allow the configured frontend URL and the Vercel production domain
+allowed_origins = [settings.FRONTEND_URL, "https://automated-review-generator.vercel.app"]
 if settings.ENVIRONMENT == "development":
     allowed_origins.extend([
         "http://localhost:5173",
         "http://localhost:3000",
     ])
+# Deduplicate
+allowed_origins = list(set(allowed_origins))
 
 app.add_middleware(
     CORSMiddleware,
