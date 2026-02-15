@@ -280,15 +280,19 @@ async def _process_unqualified(
     submission: FormSubmissionData,
     client_data,
     avg_rating: float,
+    sentiment_flag: bool = False,
 ) -> dict:
     """Handle an unqualified submission: send internal alert."""
 
+    reason = "negative_sentiment" if sentiment_flag else "low_rating"
+
     logger.info(
         f"Row {row}: NOT QUALIFIED "
-        f"(avg={avg_rating}, consent={submission.q9_testimonial_consent})"
+        f"(avg={avg_rating}, consent={submission.q9_testimonial_consent}, "
+        f"sentiment_flag={sentiment_flag})"
     )
 
-    sheets_service.update_submission_row(sheet_id, row, {
+    await sheets_service.update_submission_row(sheet_id, row, {
         "status": SubmissionStatus.ALERT_SENT.value,
     })
 
@@ -297,17 +301,19 @@ async def _process_unqualified(
         client_data=client_data,
         avg_rating=avg_rating,
         open_feedback=submission.q10_open_feedback or "",
+        reason=reason,
     )
 
-    sheets_service.log_audit_event(
+    await sheets_service.log_audit_event(
         sheet_id, "LOW_RATING_ALERT", f"row_{row}",
-        f"Avg: {avg_rating}, Alert sent to internal team"
+        f"Avg: {avg_rating}, Reason: {reason}, Alert sent to internal team"
     )
 
     return {
-        "message": "Low-rated submission. Internal alert sent.",
+        "message": f"Unqualified submission ({reason}). Internal alert sent.",
         "data": {
             "qualified": False,
             "avg_rating": avg_rating,
+            "reason": reason,
         },
     }
