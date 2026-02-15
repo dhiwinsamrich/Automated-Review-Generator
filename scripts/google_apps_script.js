@@ -24,13 +24,13 @@
  * For local development with ngrok: https://xxxx.ngrok.io/api/webhook/form
  * For production: https://your-server.com/api/webhook/form
  */
-const WEBHOOK_URL = 'http://localhost:8000/api/webhook/form';
+const WEBHOOK_URL = 'https://3e80-27-4-14-46.ngrok-free.app/api/webhook/form';
 
 /**
  * Optional: webhook secret for request authentication.
  * Must match WEBHOOK_SECRET in your .env file.
  */
-const WEBHOOK_SECRET = '';
+const WEBHOOK_SECRET = 'kTJ0HCEsZAPcC9yFU1rImxyP5Xi4TFTvOxhqJwTYYLY';
 
 
 // ─── Main Trigger Function ───────────────────────────────
@@ -50,29 +50,30 @@ function onFormSubmit(e) {
         var rowData = sheet.getRange(row, 1, 1, sheet.getLastColumn()).getValues()[0];
 
         // Build the payload matching FormSubmissionData schema
+        // Column layout: A=Timestamp, B=LinkedIn, C-J=Q1-Q8, K=Q9, L=Q10, M=Email
         var payload = {
             row_number: row,
             timestamp: rowData[0] ? rowData[0].toString() : new Date().toISOString(),
-            email: rowData[1] || '',                     // Column B: Auto-captured email
+            email: rowData[12] || '',                    // Column M: Email Address
 
             // LinkedIn profile
-            linkedin_profile: rowData[2] || '',          // Column C: LinkedIn profile
+            linkedin_profile: rowData[1] ? rowData[1].toString() : '',  // Column B: LinkedIn profile
 
-            // Q1-Q8 ratings (columns D-K, 1-10 scale)
-            q1_kickoff_satisfaction: parseFloat(rowData[3]) || null,   // Column D
-            q2_communication: parseFloat(rowData[4]) || null,          // Column E
-            q3_project_management: parseFloat(rowData[5]) || null,     // Column F
-            q4_design_ux: parseFloat(rowData[6]) || null,              // Column G
-            q5_technical_quality: parseFloat(rowData[7]) || null,      // Column H
-            q6_launch_smoothness: parseFloat(rowData[8]) || null,      // Column I
-            q7_support_handover: parseFloat(rowData[9]) || null,       // Column J
-            q8_overall_satisfaction: parseFloat(rowData[10]) || null,   // Column K
+            // Q1-Q8 ratings (columns C-J, 1-10 scale)
+            q1_kickoff_satisfaction: parseFloat(rowData[2]) || null,   // Column C
+            q2_communication: parseFloat(rowData[3]) || null,          // Column D
+            q3_project_management: parseFloat(rowData[4]) || null,     // Column E
+            q4_design_ux: parseFloat(rowData[5]) || null,              // Column F
+            q5_technical_quality: parseFloat(rowData[6]) || null,      // Column G
+            q6_launch_smoothness: parseFloat(rowData[7]) || null,      // Column H
+            q7_support_handover: parseFloat(rowData[8]) || null,       // Column I
+            q8_overall_satisfaction: parseFloat(rowData[9]) || null,   // Column J
 
-            // Q9: Testimonial consent (column L)
-            q9_testimonial_consent: rowData[11] || 'No',
+            // Q9: Testimonial consent (column K)
+            q9_testimonial_consent: rowData[10] || 'No',
 
-            // Q10: Open feedback (column M)
-            q10_open_feedback: rowData[12] || '',
+            // Q10: Open feedback (column L)
+            q10_open_feedback: rowData[11] ? rowData[11].toString() : '',
 
             // Include the sheet ID so the backend can write back
             sheet_id: sheet.getParent().getId()
@@ -153,18 +154,18 @@ function testWebhook() {
 function showColumnMapping() {
     var mapping = [
         'A: Timestamp (auto)',
-        'B: Email (auto-captured Google account)',
-        'C: LinkedIn Profile',
-        'D: Q1 - Kickoff Satisfaction (1-10)',
-        'E: Q2 - Communication (1-10)',
-        'F: Q3 - Project Management (1-10)',
-        'G: Q4 - Design & UX (1-10)',
-        'H: Q5 - Technical Quality (1-10)',
-        'I: Q6 - Launch Smoothness (1-10)',
-        'J: Q7 - Support & Handover (1-10)',
-        'K: Q8 - Overall Satisfaction (1-10)',
-        'L: Q9 - Testimonial Consent (Yes/No)',
-        'M: Q10 - Open Feedback (text)',
+        'B: LinkedIn Profile',
+        'C: Q1 - Kickoff Satisfaction (1-10)',
+        'D: Q2 - Communication (1-10)',
+        'E: Q3 - Project Management (1-10)',
+        'F: Q4 - Design & UX (1-10)',
+        'G: Q5 - Technical Quality (1-10)',
+        'H: Q6 - Launch Smoothness (1-10)',
+        'I: Q7 - Support & Handover (1-10)',
+        'J: Q8 - Overall Satisfaction (1-10)',
+        'K: Q9 - Testimonial Consent (Yes/No)',
+        'L: Q10 - Open Feedback (text)',
+        'M: Email Address (auto-captured Google account)',
         '',
         '--- System-written columns (by FastAPI) ---',
         'N: Average Rating',
