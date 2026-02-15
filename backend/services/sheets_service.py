@@ -99,6 +99,56 @@ def _lookup_client_by_email_sync(email: str) -> ClientData:
         return ClientData(business_email=email)
 
 
+# ─── Duplicate Check ─────────────────────────────────────
+
+
+async def check_duplicate_submission(sheet_id: str, email: str) -> bool:
+    """
+    Check if this email already has an active submission (SENT or APPROVED).
+
+    Args:
+        sheet_id: Google Sheet ID.
+        email: Submitter's email address.
+
+    Returns:
+        True if a duplicate active submission exists.
+    """
+    return await asyncio.to_thread(_check_duplicate_sync, sheet_id, email)
+
+
+def _check_duplicate_sync(sheet_id: str, email: str) -> bool:
+    """Synchronous duplicate check."""
+    if not sheet_id:
+        return False
+
+    try:
+        client = _get_client()
+        sheet = client.open_by_key(sheet_id).sheet1
+        all_data = sheet.get_all_values()
+
+        if len(all_data) < 2:
+            return False
+
+        email_col = 12  # Column M (0-indexed)
+        status_col = _col_letter_to_num(COLUMN_MAP["status"]) - 1
+        normalized_email = email.lower().strip()
+
+        active_statuses = {"SENT", "APPROVED", "PENDING"}
+
+        for row_data in all_data[1:]:  # Skip header
+            row_email = _safe_get(row_data, email_col).lower().strip()
+            row_status = _safe_get(row_data, status_col).upper().strip()
+            if row_email == normalized_email and row_status in active_statuses:
+                logger.info(f"Duplicate submission found for {email} (status: {row_status})")
+                return True
+
+        return False
+
+    except Exception as e:
+        logger.error(f"Duplicate check failed for {email}: {e}")
+        return False
+
+
 # ─── Form Responses Sheet Updates ─────────────────────────
 
 # Column mapping for the Form Responses sheet
