@@ -10,9 +10,8 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import PlainTextResponse
 
 from backend.config import get_settings
-from backend.models.schemas import SubmissionStatus, WebhookResponse
+from backend.models.schemas import SubmissionStatus, WebhookResponse, ClientData
 from backend.services import whatsapp_service, sheets_service, notification_service
-from backend.models.schemas import ClientData
 from backend.utils.logger import logger
 
 router = APIRouter(prefix="/api/webhook", tags=["Webhooks"])
@@ -130,7 +129,7 @@ async def _handle_consent_response(
         WebhookResponse with result.
     """
     # Look up the submission by token
-    review_data = sheets_service.get_review_by_token(sheet_id, token)
+    review_data = await sheets_service.get_review_by_token(sheet_id, token)
 
     if not review_data:
         logger.warning(f"Token not found: {token}")
@@ -146,7 +145,7 @@ async def _handle_consent_response(
         logger.info(f"Review APPROVED for row {row} by {from_number}")
 
         # Update status
-        sheets_service.update_submission_row(sheet_id, row, {
+        await sheets_service.update_submission_row(sheet_id, row, {
             "status": SubmissionStatus.APPROVED.value,
         })
 
@@ -163,7 +162,7 @@ async def _handle_consent_response(
             token=token,
         )
 
-        sheets_service.log_audit_event(
+        await sheets_service.log_audit_event(
             sheet_id, "APPROVED", f"row_{row}",
             f"Client approved via WhatsApp. Landing page link sent via {result.method.value}."
         )
@@ -177,11 +176,11 @@ async def _handle_consent_response(
     elif action == "edit":
         logger.info(f"Review EDIT requested for row {row} by {from_number}")
 
-        sheets_service.update_submission_row(sheet_id, row, {
+        await sheets_service.update_submission_row(sheet_id, row, {
             "status": SubmissionStatus.EDITED.value,
         })
 
-        sheets_service.log_audit_event(
+        await sheets_service.log_audit_event(
             sheet_id, "EDIT_REQUESTED", f"row_{row}",
             "Client requested edit via WhatsApp."
         )
@@ -196,11 +195,11 @@ async def _handle_consent_response(
     elif action == "decline":
         logger.info(f"Review DECLINED for row {row} by {from_number}")
 
-        sheets_service.update_submission_row(sheet_id, row, {
+        await sheets_service.update_submission_row(sheet_id, row, {
             "status": SubmissionStatus.DECLINED.value,
         })
 
-        sheets_service.log_audit_event(
+        await sheets_service.log_audit_event(
             sheet_id, "DECLINED", f"row_{row}",
             "Client declined via WhatsApp. No further messages."
         )
