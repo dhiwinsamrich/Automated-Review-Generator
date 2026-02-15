@@ -54,39 +54,49 @@ function ReviewLanding() {
         return () => clearTimeout(timer)
     }, [redirecting, countdown, review])
 
+    // Copy text to clipboard — works on both HTTPS and HTTP
+    const copyToClipboard = async (text) => {
+        // Method 1: Modern Clipboard API (requires HTTPS in production)
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text)
+            return true
+        }
+
+        // Method 2: Fallback using textarea + execCommand (works on HTTP)
+        const textarea = document.createElement('textarea')
+        textarea.value = text
+        textarea.style.position = 'fixed'
+        textarea.style.left = '-9999px'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.focus()
+        textarea.select()
+
+        try {
+            document.execCommand('copy')
+            return true
+        } finally {
+            document.body.removeChild(textarea)
+        }
+    }
+
     // Handle copy + redirect
     const handleCopyAndPost = async () => {
         if (!review) return
 
         try {
-            // Copy to clipboard
-            await navigator.clipboard.writeText(review.draft_text)
-            setCopied(true)
-
-            // Track the copy event
-            fetch(`${API_BASE}/api/review/${token}/copied`, { method: 'POST' }).catch(() => { })
-
-            // Start countdown redirect
-            setRedirecting(true)
-        } catch (err) {
-            // Clipboard API fallback for older browsers
-            const textarea = document.createElement('textarea')
-            textarea.value = review.draft_text
-            textarea.style.position = 'fixed'
-            textarea.style.opacity = '0'
-            document.body.appendChild(textarea)
-            textarea.select()
-
-            try {
-                document.execCommand('copy')
+            const success = await copyToClipboard(review.draft_text)
+            if (success) {
                 setCopied(true)
-                fetch(`${API_BASE}/api/review/${token}/copied`, { method: 'POST' }).catch(() => { })
-                setRedirecting(true)
-            } catch (copyErr) {
-                alert('Please manually copy the review text above.')
-            }
 
-            document.body.removeChild(textarea)
+                // Track the copy event (fire and forget)
+                fetch(`${API_BASE}/api/review/${token}/copied`, { method: 'POST' }).catch(() => { })
+
+                // Start countdown redirect
+                setRedirecting(true)
+            }
+        } catch {
+            alert('Could not copy automatically. Please select and copy the review text above, then click the link below to post it on Google.')
         }
     }
 
