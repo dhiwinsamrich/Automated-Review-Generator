@@ -152,8 +152,9 @@ def _check_duplicate_sync(sheet_id: str, email: str) -> bool:
 # ─── Form Responses Sheet Updates ─────────────────────────
 
 # Column mapping for the Form Responses sheet
-# Columns A-L are auto-filled by Google Forms (Timestamp, Email, Q1-Q10)
-# Columns M onward are written by our system
+# Columns A-M are auto-filled by Google Forms:
+#   A=Timestamp, B=LinkedIn, C-J=Q1-Q8, K=Q9, L=Q10, M=Email
+# Columns N onward are written by our system
 COLUMN_MAP = {
     "avg_rating": "N",
     "qualified": "O",
@@ -183,6 +184,11 @@ async def update_submission_row(sheet_id: str, row: int, updates: dict) -> None:
         row: Row number (1-indexed) of the submission.
         updates: Dict of field_name -> value to write.
     """
+    await asyncio.to_thread(_update_submission_row_sync, sheet_id, row, updates)
+
+
+def _update_submission_row_sync(sheet_id: str, row: int, updates: dict) -> None:
+    """Synchronous implementation of row update with batching."""
     if not sheet_id:
         logger.warning("No sheet_id provided — skipping row update")
         return
