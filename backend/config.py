@@ -45,7 +45,8 @@ class Settings(BaseSettings):
 
     # --- Application ---
     APP_BASE_URL: str = "http://localhost:8000"
-    FRONTEND_URL: str = "http://localhost:5173"
+    # FRONTEND_URL: str = "http://localhost:5173"
+    FRONTEND_URL: str = "https://automated-review-generator.vercel.app"
 
     # --- Webhook Security ---
     WEBHOOK_SECRET: str = ""
