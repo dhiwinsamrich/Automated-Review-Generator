@@ -234,6 +234,46 @@ async def _process_qualified(
     }
 
 
+async def _process_consent_declined(
+    sheet_id: str,
+    row: int,
+    submission: FormSubmissionData,
+    client_data,
+    avg_rating: float,
+) -> dict:
+    """Handle high-rating but consent declined: send context-aware internal alert."""
+
+    logger.info(
+        f"Row {row}: HIGH RATING BUT CONSENT DECLINED "
+        f"(avg={avg_rating}, consent={submission.q9_testimonial_consent})"
+    )
+
+    await sheets_service.update_submission_row(sheet_id, row, {
+        "status": SubmissionStatus.ALERT_SENT.value,
+    })
+
+    await notification_service.send_low_rating_alert(
+        client_data=client_data,
+        avg_rating=avg_rating,
+        open_feedback=submission.q10_open_feedback or "",
+        reason="consent_declined",
+    )
+
+    await sheets_service.log_audit_event(
+        sheet_id, "CONSENT_DECLINED_ALERT", f"row_{row}",
+        f"Avg: {avg_rating}, High rating but consent declined"
+    )
+
+    return {
+        "message": "High-rated submission but consent declined. Internal notification sent.",
+        "data": {
+            "qualified": False,
+            "avg_rating": avg_rating,
+            "reason": "consent_declined",
+        },
+    }
+
+
 async def _process_unqualified(
     sheet_id: str,
     row: int,
