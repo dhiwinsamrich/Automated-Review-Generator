@@ -8,6 +8,14 @@ based on average rating threshold and testimonial consent.
 from backend.config import get_settings
 from backend.utils.logger import logger
 
+# Keywords that suggest negative sentiment despite high ratings
+_NEGATIVE_KEYWORDS = [
+    "terrible", "horrible", "awful", "worst", "never again",
+    "disappointed", "waste of time", "waste of money", "regret",
+    "unprofessional", "scam", "fraud", "do not recommend",
+    "stay away", "avoid", "disaster",
+]
+
 
 def calculate_average(ratings: list) -> float:
     """
