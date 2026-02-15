@@ -174,7 +174,7 @@ async def _process_qualified(
 
     logger.info(f"Row {row}: QUALIFIED (avg={avg_rating})")
 
-    sheets_service.log_audit_event(
+    await sheets_service.log_audit_event(
         sheet_id, "QUALIFIED", f"row_{row}",
         f"Avg: {avg_rating}, Consent: Yes"
     )
@@ -193,13 +193,13 @@ async def _process_qualified(
     token = str(uuid.uuid4())
 
     # Write draft and token to sheet
-    sheets_service.update_submission_row(sheet_id, row, {
+    await sheets_service.update_submission_row(sheet_id, row, {
         "draft_text": draft,
         "token": token,
         "status": SubmissionStatus.PENDING.value,
     })
 
-    sheets_service.log_audit_event(
+    await sheets_service.log_audit_event(
         sheet_id, "AI_DRAFT_GENERATED", f"row_{row}",
         f"Draft: {len(draft)} chars, Token: {token[:8]}..."
     )
@@ -212,13 +212,13 @@ async def _process_qualified(
     )
 
     # Update delivery status
-    sheets_service.update_submission_row(sheet_id, row, {
+    await sheets_service.update_submission_row(sheet_id, row, {
         "status": SubmissionStatus.SENT.value,
         "delivery_method": result.method.value,
         "sent_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     })
 
-    sheets_service.log_audit_event(
+    await sheets_service.log_audit_event(
         sheet_id, "NOTIFICATION_SENT", f"row_{row}",
         f"Method: {result.method.value}, Success: {result.success}"
     )
