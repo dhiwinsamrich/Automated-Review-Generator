@@ -108,3 +108,105 @@ async def mark_review_copied(token: str):
     logger.info(f"Review copied for row {row}")
 
     return {"success": True, "message": "Copy event recorded"}
+
+
+@router.post("/reviews/send-reminders", tags=["System"])
+async def send_pending_reminders(
+    x_webhook_secret: str = Header(default="", alias="X-Webhook-Secret"),
+):
+    """
+    Send reminder notifications for approved-but-not-copied reviews.
+
+    Call this endpoint via an external scheduler (cron, Cloud Scheduler)
+    to nudge clients who approved but haven't posted yet.
+
+    Requires the webhook secret header for authentication.
+    """
+    settings = get_settings()
+
+    if settings.WEBHOOK_SECRET and x_webhook_secret != settings.WEBHOOK_SECRET:
+        raise HTTPException(status_code=403, detail="Invalid webhook secret")
+
+    sheet_id = settings.FORM_RESPONSES_SHEET_ID
+    if not sheet_id:
+        return {"success": False, "message": "FORM_RESPONSES_SHEET_ID not configured"}
+
+    reminded = 0
+    expired = 0
+
+    try:
+        import asyncio
+        all_data = await asyncio.to_thread(
+            _get_all_rows_sync, sheet_id
+        )
+
+        from backend.services.sheets_service import COLUMN_MAP, _col_letter_to_num, _safe_get
+
+        status_col = _col_letter_to_num(COLUMN_MAP["status"]) - 1
+        sent_at_col = _col_letter_to_num(COLUMN_MAP["sent_at"]) - 1
+        token_col = _col_letter_to_num(COLUMN_MAP["token"]) - 1
+        name_col = _col_letter_to_num(COLUMN_MAP["client_name"]) - 1
+        wa_col = _col_letter_to_num(COLUMN_MAP["whatsapp"]) - 1
+        email_col = _col_letter_to_num(COLUMN_MAP["business_email"]) - 1
+
+        for row_data in all_data[1:]:  # Skip header
+            status = _safe_get(row_data, status_col).upper()
+            if status not in ("SENT", "APPROVED"):
+                continue
+
+            sent_at_str = _safe_get(row_data, sent_at_col)
+            if not sent_at_str:
+                continue
+
+            try:
+                sent_at = datetime.strptime(sent_at_str, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                continue
+
+            days_elapsed = (datetime.now() - sent_at).days
+
+            # Expire if past token expiry
+            if days_elapsed > settings.CONSENT_TOKEN_EXPIRY_DAYS:
+                expired += 1
+                continue
+
+            # Send reminder if 3+ days old
+            if days_elapsed >= 3:
+                token = _safe_get(row_data, token_col)
+                client_name = _safe_get(row_data, name_col) or "Valued Client"
+                whatsapp = _safe_get(row_data, wa_col)
+                business_email = _safe_get(row_data, email_col)
+
+                if not token:
+                    continue
+
+                client_data = ClientData(
+                    name=client_name,
+                    whatsapp=whatsapp or None,
+                    business_email=business_email,
+                )
+
+                await notification_service.send_approval_notification(
+                    client_data=client_data,
+                    token=token,
+                )
+                reminded += 1
+
+    except Exception as e:
+        logger.error(f"Reminder job failed: {e}")
+        return {"success": False, "message": str(e)}
+
+    logger.info(f"Reminder job complete: {reminded} reminded, {expired} expired")
+    return {
+        "success": True,
+        "reminded": reminded,
+        "expired": expired,
+    }
+
+
+def _get_all_rows_sync(sheet_id: str) -> list:
+    """Fetch all rows from the form responses sheet (sync helper)."""
+    from backend.services.sheets_service import _get_client
+    client = _get_client()
+    sheet = client.open_by_key(sheet_id).sheet1
+    return sheet.get_all_values()
