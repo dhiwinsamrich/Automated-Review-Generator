@@ -104,9 +104,10 @@ async def send_internal_alert(
     company: str,
     avg_rating: float,
     open_feedback: str = "",
+    reason: str = "low_rating",
 ) -> bool:
     """
-    Send an internal alert email for low-rated submissions.
+    Send an internal alert email for low-rated or consent-declined submissions.
 
     Sent to the configured ALERT_EMAILS recipients.
 
@@ -115,6 +116,7 @@ async def send_internal_alert(
         company: Client's company.
         avg_rating: Average rating score.
         open_feedback: Optional Q10 open-text feedback.
+        reason: Alert reason — 'low_rating' or 'consent_declined'.
 
     Returns:
         True if alert sent successfully.
@@ -126,28 +128,49 @@ async def send_internal_alert(
         logger.warning("No ALERT_EMAILS configured — skipping internal alert")
         return False
 
-    subject = f"[ACTION REQUIRED] Low Feedback Score from {client_name}"
+    safe_name = _esc(client_name)
+    safe_company = _esc(company) or "N/A"
+    safe_feedback = _esc(open_feedback)
+
+    if reason == "consent_declined":
+        subject = f"[INFO] Testimonial Consent Declined by {client_name}"
+        banner_color = "#FF8C00"
+        banner_title = "Testimonial Consent Declined"
+        action_text = (
+            "This client gave a high satisfaction rating but declined "
+            "testimonial consent. Consider a personal follow-up."
+        )
+    else:
+        subject = f"[ACTION REQUIRED] Low Feedback Score from {client_name}"
+        banner_color = "#DC3545"
+        banner_title = "Low Feedback Alert"
+        action_text = (
+            "Reach out to this client to understand their concerns "
+            "and address any issues."
+        )
+
+    rating_color = "#DC3545" if avg_rating < 8.0 else "#28A745"
 
     html_body = f"""
     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: #DC3545; padding: 20px; border-radius: 12px 12px 0 0;">
-            <h2 style="color: white; margin: 0;">⚠️ Low Feedback Alert</h2>
+        <div style="background: {banner_color}; padding: 20px; border-radius: 12px 12px 0 0;">
+            <h2 style="color: white; margin: 0;">{banner_title}</h2>
         </div>
 
         <div style="background: #ffffff; padding: 30px; border: 1px solid #e9ecef;">
             <table style="width: 100%; border-collapse: collapse;">
                 <tr>
                     <td style="padding: 8px 0; color: #666; width: 140px;"><strong>Client:</strong></td>
-                    <td style="padding: 8px 0; color: #333;">{client_name}</td>
+                    <td style="padding: 8px 0; color: #333;">{safe_name}</td>
                 </tr>
                 <tr>
                     <td style="padding: 8px 0; color: #666;"><strong>Company:</strong></td>
-                    <td style="padding: 8px 0; color: #333;">{company or 'N/A'}</td>
+                    <td style="padding: 8px 0; color: #333;">{safe_company}</td>
                 </tr>
                 <tr>
                     <td style="padding: 8px 0; color: #666;"><strong>Average Rating:</strong></td>
                     <td style="padding: 8px 0;">
-                        <span style="background: #DC3545; color: white; padding: 4px 12px;
+                        <span style="background: {rating_color}; color: white; padding: 4px 12px;
                                      border-radius: 4px; font-weight: 600;">
                             {avg_rating:.1f} / 10
                         </span>
@@ -157,13 +180,12 @@ async def send_internal_alert(
 
             {"<hr style='margin: 20px 0; border: none; border-top: 1px solid #eee;'>"
              "<p style='color: #666;'><strong>Client Feedback:</strong></p>"
-             f"<p style='color: #333; line-height: 1.6;'>{open_feedback}</p>"
-             if open_feedback else ""}
+             f"<p style='color: #333; line-height: 1.6;'>{safe_feedback}</p>"
+             if safe_feedback else ""}
 
             <div style="background: #FFF3CD; padding: 15px; border-radius: 8px; margin-top: 20px;">
                 <p style="margin: 0; color: #856404;">
-                    <strong>Recommended Action:</strong> Reach out to this client
-                    to understand their concerns and address any issues.
+                    <strong>Recommended Action:</strong> {action_text}
                 </p>
             </div>
         </div>
