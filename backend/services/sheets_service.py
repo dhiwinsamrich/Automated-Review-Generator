@@ -197,11 +197,17 @@ def _update_submission_row_sync(sheet_id: str, row: int, updates: dict) -> None:
         client = _get_client()
         sheet = client.open_by_key(sheet_id).sheet1
 
+        batch_data = []
         for field, value in updates.items():
             col = COLUMN_MAP.get(field)
             if col:
-                cell = f"{col}{row}"
-                sheet.update(cell, [[str(value) if value is not None else ""]])
+                batch_data.append({
+                    "range": f"{col}{row}",
+                    "values": [[str(value) if value is not None else ""]],
+                })
+
+        if batch_data:
+            sheet.batch_update(batch_data)
 
         logger.info(f"Updated row {row}: {list(updates.keys())}")
 
