@@ -10,7 +10,7 @@ This is the main entry point for the entire review generation pipeline.
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header
 
 from backend.config import get_settings
 from backend.models.schemas import (
