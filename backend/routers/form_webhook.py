@@ -30,7 +30,9 @@ router = APIRouter(prefix="/api/webhook", tags=["Webhooks"])
 
 
 @router.post("/form", response_model=WebhookResponse)
-async def handle_form_submission(submission: FormSubmissionData):
+async def handle_form_submission(submission: FormSubmissionData,
+    x_webhook_secret: str = Header(default="", alias="X-Webhook-Secret"),
+):
     """
     Process a new Google Form submission.
 
