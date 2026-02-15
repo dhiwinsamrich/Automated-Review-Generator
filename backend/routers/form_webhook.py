@@ -71,11 +71,27 @@ async def handle_form_submission(
     logger.info(f"Processing form submission: row={row}, email={submission.email}")
 
     try:
-        # Step 1: Look up client in CRM
-        client_data = sheets_service.lookup_client_by_email(submission.email)
+        # Step 1: Check for duplicate active submissions
+        is_duplicate = await sheets_service.check_duplicate_submission(
+            sheet_id, submission.email
+        )
+        if is_duplicate:
+            logger.info(f"Duplicate submission detected for {submission.email}")
+            await sheets_service.log_audit_event(
+                sheet_id, "DUPLICATE", f"row_{row}",
+                f"Duplicate submission from {submission.email} — skipping"
+            )
+            return WebhookResponse(
+                success=True,
+                message="Duplicate submission detected. Previous submission is still active.",
+                data={"duplicate": True},
+            )
+
+        # Step 2: Look up client in CRM
+        client_data = await sheets_service.lookup_client_by_email(submission.email)
 
         # Write CRM data back to sheet
-        sheets_service.update_submission_row(sheet_id, row, {
+        await sheets_service.update_submission_row(sheet_id, row, {
             "client_name": client_data.name,
             "company": client_data.company,
             "services": client_data.services,
@@ -83,7 +99,7 @@ async def handle_form_submission(
             "business_email": client_data.business_email,
         })
 
-        sheets_service.log_audit_event(
+        await sheets_service.log_audit_event(
             sheet_id, "FORM_SUBMIT", f"row_{row}",
             f"New submission from {submission.email} "
             f"(CRM match: {client_data.found})"
