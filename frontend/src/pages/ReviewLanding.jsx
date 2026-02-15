@@ -162,6 +162,18 @@ function ReviewLanding() {
                         Redirecting to Google in {countdown}s...
                     </p>
                 )}
+
+                {/* Manual link fallback if redirect doesn't happen */}
+                {review.gbp_review_url && copied && (
+                    <p style={{ textAlign: 'center', marginTop: '12px', fontSize: '13px' }}>
+                        <a
+                            href={review.gbp_review_url}
+                            style={{ color: '#64748b', textDecoration: 'underline' }}
+                        >
+                            Or click here to open Google Reviews
+                        </a>
+                    </p>
+                )}
             </div>
         </div>
     )
