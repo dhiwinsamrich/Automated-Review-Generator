@@ -119,19 +119,26 @@ async def handle_form_submission(
         )
 
         # Write qualification data
-        sheets_service.update_submission_row(sheet_id, row, {
+        await sheets_service.update_submission_row(sheet_id, row, {
             "avg_rating": avg_rating,
             "qualified": "YES" if is_qualified else "NO",
         })
 
-        # Step 3: Branch based on qualification
-        if is_qualified:
+        # Step 4: Branch based on qualification
+        if is_qualified and not sentiment_flag:
             result = await _process_qualified(
                 sheet_id, row, submission, client_data, avg_rating
             )
-        else:
-            result = await _process_unqualified(
+        elif rating_ok and not consent_ok:
+            # High rating but consent declined — different alert
+            result = await _process_consent_declined(
                 sheet_id, row, submission, client_data, avg_rating
+            )
+        else:
+            # Low rating OR negative sentiment flagged
+            result = await _process_unqualified(
+                sheet_id, row, submission, client_data, avg_rating,
+                sentiment_flag=sentiment_flag,
             )
 
         return WebhookResponse(
@@ -144,12 +151,12 @@ async def handle_form_submission(
         logger.error(f"Pipeline error for row {row}: {e}")
 
         # Write error to sheet
-        sheets_service.update_submission_row(sheet_id, row, {
+        await sheets_service.update_submission_row(sheet_id, row, {
             "status": SubmissionStatus.PENDING.value,
             "error": str(e),
         })
 
-        sheets_service.log_audit_event(
+        await sheets_service.log_audit_event(
             sheet_id, "ERROR", f"row_{row}", str(e)
         )
 
