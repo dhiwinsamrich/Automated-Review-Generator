@@ -5,7 +5,9 @@
       "Bash(unzip:*)",
       "Bash(for docx in *.docx)",
       "Bash(do echo \"==== $docx ====\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(python -c:*)",
+      "Bash(npx vite build:*)"
     ]
   }
 }
