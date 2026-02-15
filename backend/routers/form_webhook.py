@@ -105,10 +105,17 @@ async def handle_form_submission(
             f"(CRM match: {client_data.found})"
         )
 
-        # Step 2: Calculate qualification
+        # Step 3: Calculate qualification
         avg_rating = qualification.calculate_average(submission.ratings)
-        is_qualified = qualification.check_qualification(
-            avg_rating, submission.q9_testimonial_consent
+        rating_ok = qualification.meets_rating_threshold(avg_rating)
+        consent_ok = qualification.has_testimonial_consent(
+            submission.q9_testimonial_consent
+        )
+        is_qualified = rating_ok and consent_ok
+
+        # Check for negative sentiment in open feedback (edge case EC-01)
+        sentiment_flag = qualification.has_negative_sentiment(
+            submission.q10_open_feedback or ""
         )
 
         # Write qualification data
