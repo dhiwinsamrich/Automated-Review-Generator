@@ -368,7 +368,7 @@ ngrok http 8000
 ```
 
 - [ ] Backend running on `http://localhost:8000`
-- [ ] Frontend running on `http://localhost:5173`
+- [ ] Frontend running on Vercel: `https://automated-review-generator.vercel.app`
 - [ ] ngrok tunnel active (if testing with Google Apps Script)
 
 ---
@@ -393,7 +393,7 @@ curl -X POST http://localhost:8000/api/webhook/form ^
 ```
 
 ### Landing Page
-Open [http://localhost:5173/review/test-token](http://localhost:5173/review/test-token) — will show error until real data exists.
+Open [https://automated-review-generator.vercel.app/review/test-token](https://automated-review-generator.vercel.app/review/test-token) — will show error until real data exists.
 
 ### End-to-End Test
 1. Submit the Google Form with a test response
@@ -430,6 +430,9 @@ WHATSAPP_ACCESS_TOKEN=
 WHATSAPP_PHONE_NUMBER_ID=
 WHATSAPP_VERIFY_TOKEN=
 WHATSAPP_API_VERSION=v18.0
+WHATSAPP_TEMPLATE_NAME=review_consent
+WHATSAPP_TEMPLATE_NAME_APPROVED=review_approved
+WHATSAPP_TEMPLATE_LANGUAGE=en
 
 # --- Email (SMTP) ---
 SMTP_HOST=smtp.gmail.com
@@ -447,7 +450,7 @@ RATING_THRESHOLD=8.0
 
 # --- Application ---
 APP_BASE_URL=http://localhost:8000
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URL=https://automated-review-generator.vercel.app
 
 # --- Webhook Security ---
 WEBHOOK_SECRET=
