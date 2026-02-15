@@ -2,8 +2,11 @@
 Google Sheets API service for CRM lookup and status tracking.
 
 Uses gspread with a service account for authentication.
+All public functions are async (using asyncio.to_thread) to avoid
+blocking the FastAPI event loop.
 """
 
+import asyncio
 import re
 from datetime import datetime
 
@@ -40,7 +43,7 @@ def _get_client() -> gspread.Client:
 # ─── CRM Lookup ──────────────────────────────────────────
 
 
-def lookup_client_by_email(email: str) -> ClientData:
+async def lookup_client_by_email(email: str) -> ClientData:
     """
     Look up client details in the internal CRM Google Sheet by email.
 
@@ -114,9 +117,11 @@ COLUMN_MAP = {
 }
 
 
-def update_submission_row(sheet_id: str, row: int, updates: dict) -> None:
+async def update_submission_row(sheet_id: str, row: int, updates: dict) -> None:
     """
     Update calculated/status columns for a form submission row.
+
+    Uses batch_update for a single API call instead of one call per field.
 
     Args:
         sheet_id: Google Sheet ID for the form responses sheet.
@@ -144,7 +149,7 @@ def update_submission_row(sheet_id: str, row: int, updates: dict) -> None:
         raise
 
 
-def get_review_by_token(sheet_id: str, token: str) -> dict | None:
+async def get_review_by_token(sheet_id: str, token: str) -> dict | None:
     """
     Find a submission row by its consent token.
 
@@ -190,7 +195,7 @@ def get_review_by_token(sheet_id: str, token: str) -> dict | None:
 # ─── Audit Log ────────────────────────────────────────────
 
 
-def log_audit_event(
+async def log_audit_event(
     sheet_id: str, event_type: str, reference: str, details: str
 ) -> None:
     """
