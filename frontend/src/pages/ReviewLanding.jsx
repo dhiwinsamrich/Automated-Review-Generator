@@ -19,6 +19,9 @@ function ReviewLanding() {
                 const res = await fetch(`${API_BASE}/api/review/${token}`)
                 if (!res.ok) {
                     const data = await res.json().catch(() => ({}))
+                    if (res.status === 410) {
+                        throw new Error(data.detail || 'This review link has expired.')
+                    }
                     throw new Error(data.detail || 'Review not found')
                 }
                 const data = await res.json()
