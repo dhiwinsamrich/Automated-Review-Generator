@@ -40,7 +40,7 @@ class FormSubmissionData(BaseModel):
 
     row_number: int
     timestamp: str
-    email: str
+    email: EmailStr
 
     # LinkedIn profile (optional)
     linkedin_profile: Optional[str] = None
