@@ -36,6 +36,7 @@ frontend/dist/
 frontend/.env.local
 
 # Logs
+logs/
 *.log
 
 # Testing
