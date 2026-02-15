@@ -320,11 +320,12 @@ def _format_whatsapp_number(number: str) -> str | None:
     if not number:
         return None
 
+    settings = get_settings()
     cleaned = re.sub(r"[\s\-\(\)]", "", number)
 
-    # Add India country code if missing
+    # Add configurable country code if missing
     if not cleaned.startswith("+"):
-        cleaned = "+91" + cleaned
+        cleaned = settings.DEFAULT_COUNTRY_CODE + cleaned
 
     return cleaned
 
