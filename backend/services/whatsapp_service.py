@@ -20,8 +20,15 @@ async def send_consent_message(
     """
     Send WhatsApp Message 1: Review draft with Approve/Edit/Decline buttons.
 
-    Uses an interactive message with quick reply buttons so the client
-    can respond directly within WhatsApp.
+    Uses an approved message template for business-initiated conversations.
+    The template 'review_consent' must be created and approved in Meta
+    Business Manager with:
+      - {{1}} = client name
+      - {{2}} = review draft text
+      - 3 quick reply buttons: Approve, Edit, Decline
+
+    Falls back to a free-form interactive message if WHATSAPP_TEMPLATE_NAME
+    is not configured (only works within a 24-hour customer service window).
 
     Args:
         phone: Client's WhatsApp number in E.164 format.
@@ -33,60 +40,109 @@ async def send_consent_message(
         Dict with 'success', 'message_id', and optionally 'error'.
     """
     settings = get_settings()
+    to_number = phone.replace("+", "")
 
-    # Truncate draft for WhatsApp body (max ~1024 chars for interactive body)
+    # Truncate draft for WhatsApp body (max ~1024 chars)
     truncated_draft = _truncate(draft_text, 800)
 
-    payload = {
-        "messaging_product": "whatsapp",
-        "recipient_type": "individual",
-        "to": phone.replace("+", ""),  # WhatsApp API expects number without +
-        "type": "interactive",
-        "interactive": {
-            "type": "button",
-            "header": {
-                "type": "text",
-                "text": "Your Review Draft is Ready! 📝",
-            },
-            "body": {
-                "text": (
-                    f"Hi {client_name},\n\n"
-                    f"Thank you for your feedback on our recent project! "
-                    f"Based on your responses, we've drafted a review for you:\n\n"
-                    f'"{truncated_draft}"\n\n'
-                    f"Would you like to post this review on Google?"
-                ),
-            },
-            "footer": {
-                "text": "bdcode - Thank you for your partnership",
-            },
-            "action": {
-                "buttons": [
+    template_name = settings.WHATSAPP_TEMPLATE_NAME
+
+    if template_name:
+        # Use approved message template (required for business-initiated messages)
+        payload = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": to_number,
+            "type": "template",
+            "template": {
+                "name": template_name,
+                "language": {"code": settings.WHATSAPP_TEMPLATE_LANGUAGE},
+                "components": [
                     {
-                        "type": "reply",
-                        "reply": {
-                            "id": f"approve_{token}",
-                            "title": "Approve ✅",
-                        },
+                        "type": "body",
+                        "parameters": [
+                            {"type": "text", "text": client_name},
+                            {"type": "text", "text": truncated_draft},
+                        ],
                     },
                     {
-                        "type": "reply",
-                        "reply": {
-                            "id": f"edit_{token}",
-                            "title": "Edit ✏️",
-                        },
+                        "type": "button",
+                        "sub_type": "quick_reply",
+                        "index": "0",
+                        "parameters": [{"type": "payload", "payload": f"approve_{token}"}],
                     },
                     {
-                        "type": "reply",
-                        "reply": {
-                            "id": f"decline_{token}",
-                            "title": "Decline ❌",
-                        },
+                        "type": "button",
+                        "sub_type": "quick_reply",
+                        "index": "1",
+                        "parameters": [{"type": "payload", "payload": f"edit_{token}"}],
+                    },
+                    {
+                        "type": "button",
+                        "sub_type": "quick_reply",
+                        "index": "2",
+                        "parameters": [{"type": "payload", "payload": f"decline_{token}"}],
                     },
                 ],
             },
-        },
-    }
+        }
+    else:
+        # Fallback: free-form interactive message
+        # Only works if the customer has messaged you within the last 24 hours
+        logger.warning(
+            "WHATSAPP_TEMPLATE_NAME not configured — using free-form message "
+            "(only works within 24-hour customer service window)"
+        )
+        payload = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": to_number,
+            "type": "interactive",
+            "interactive": {
+                "type": "button",
+                "header": {
+                    "type": "text",
+                    "text": "Your Review Draft is Ready!",
+                },
+                "body": {
+                    "text": (
+                        f"Hi {client_name},\n\n"
+                        f"Thank you for your feedback on our recent project! "
+                        f"Based on your responses, we've drafted a review for you:\n\n"
+                        f'"{truncated_draft}"\n\n'
+                        f"Would you like to post this review on Google?"
+                    ),
+                },
+                "footer": {
+                    "text": "bdcode - Thank you for your partnership",
+                },
+                "action": {
+                    "buttons": [
+                        {
+                            "type": "reply",
+                            "reply": {
+                                "id": f"approve_{token}",
+                                "title": "Approve",
+                            },
+                        },
+                        {
+                            "type": "reply",
+                            "reply": {
+                                "id": f"edit_{token}",
+                                "title": "Edit",
+                            },
+                        },
+                        {
+                            "type": "reply",
+                            "reply": {
+                                "id": f"decline_{token}",
+                                "title": "Decline",
+                            },
+                        },
+                    ],
+                },
+            },
+        }
 
     return await _send_whatsapp_message(payload)
 
@@ -100,6 +156,7 @@ async def send_review_ready_message(
     Send WhatsApp Message 2: Confirmation with URL button to landing page.
 
     Sent after client taps "Approve" on Message 1.
+    Uses the 'review_approved' template if configured.
 
     Args:
         phone: Client's WhatsApp number in E.164 format.
@@ -109,35 +166,75 @@ async def send_review_ready_message(
     Returns:
         Dict with 'success', 'message_id', and optionally 'error'.
     """
-    payload = {
-        "messaging_product": "whatsapp",
-        "recipient_type": "individual",
-        "to": phone.replace("+", ""),
-        "type": "interactive",
-        "interactive": {
-            "type": "cta_url",
-            "header": {
-                "type": "text",
-                "text": "Your Review is Approved! 🎉",
+    settings = get_settings()
+    to_number = phone.replace("+", "")
+    template_name = settings.WHATSAPP_TEMPLATE_NAME_APPROVED
+
+    if template_name:
+        # Extract the token (dynamic suffix) from the full URL
+        # Template URL is: https://example.com/review/{{1}}
+        # We only send the token part, Meta appends it to the base URL
+        token_suffix = landing_page_url.rstrip("/").split("/")[-1]
+
+        # Use approved template with dynamic URL button
+        payload = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": to_number,
+            "type": "template",
+            "template": {
+                "name": template_name,
+                "language": {"code": settings.WHATSAPP_TEMPLATE_LANGUAGE},
+                "components": [
+                    {
+                        "type": "body",
+                        "parameters": [
+                            {"type": "text", "text": client_name},
+                        ],
+                    },
+                    {
+                        "type": "button",
+                        "sub_type": "url",
+                        "index": "0",
+                        "parameters": [{"type": "text", "text": token_suffix}],
+                    },
+                ],
             },
-            "body": {
-                "text": (
-                    f"Great, {client_name}! Your review is ready.\n\n"
-                    f"Tap below to copy and post — takes just 10 seconds! 🚀"
-                ),
-            },
-            "footer": {
-                "text": "bdcode - Thank you for your partnership",
-            },
-            "action": {
-                "name": "cta_url",
-                "parameters": {
-                    "display_text": "📋 Copy & Post Review",
-                    "url": landing_page_url,
+        }
+    else:
+        # Fallback: free-form interactive message (24-hour window only)
+        logger.warning(
+            "WHATSAPP_TEMPLATE_NAME_APPROVED not configured — using free-form message"
+        )
+        payload = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": to_number,
+            "type": "interactive",
+            "interactive": {
+                "type": "cta_url",
+                "header": {
+                    "type": "text",
+                    "text": "Your Review is Approved!",
+                },
+                "body": {
+                    "text": (
+                        f"Great, {client_name}! Your review is ready.\n\n"
+                        f"Tap below to copy and post — takes just 10 seconds!"
+                    ),
+                },
+                "footer": {
+                    "text": "bdcode - Thank you for your partnership",
+                },
+                "action": {
+                    "name": "cta_url",
+                    "parameters": {
+                        "display_text": "Copy & Post Review",
+                        "url": landing_page_url,
+                    },
                 },
             },
-        },
-    }
+        }
 
     return await _send_whatsapp_message(payload)
 
