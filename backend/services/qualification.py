@@ -70,15 +70,13 @@ def check_qualification(avg_rating: float, consent: str) -> bool:
     Returns:
         True if submission qualifies for review generation.
     """
-    settings = get_settings()
-    threshold = settings.RATING_THRESHOLD
-
-    consent_given = consent.strip().lower() == "yes"
-    meets_threshold = avg_rating >= threshold
+    threshold_met = meets_rating_threshold(avg_rating)
+    consent_given = has_testimonial_consent(consent)
 
     logger.info(
-        f"Qualification check: avg={avg_rating}, threshold={threshold}, "
-        f"consent={consent_given} → qualified={meets_threshold and consent_given}"
+        f"Qualification check: avg={avg_rating}, "
+        f"threshold_met={threshold_met}, consent={consent_given} "
+        f"→ qualified={threshold_met and consent_given}"
     )
 
     return meets_threshold and consent_given
