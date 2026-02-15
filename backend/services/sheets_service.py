@@ -225,8 +225,13 @@ async def get_review_by_token(sheet_id: str, token: str) -> dict | None:
         token: Unique consent token to search for.
 
     Returns:
-        Dict with review data, or None if not found.
+        Dict with review data (including sent_at for expiry check), or None.
     """
+    return await asyncio.to_thread(_get_review_by_token_sync, sheet_id, token)
+
+
+def _get_review_by_token_sync(sheet_id: str, token: str) -> dict | None:
+    """Synchronous implementation of token lookup."""
     if not sheet_id:
         return None
 
@@ -249,6 +254,7 @@ async def get_review_by_token(sheet_id: str, token: str) -> dict | None:
                     "company": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["company"]) - 1),
                     "draft_text": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["draft_text"]) - 1),
                     "status": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["status"]) - 1),
+                    "sent_at": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["sent_at"]) - 1),
                     "token": token,
                 }
 
