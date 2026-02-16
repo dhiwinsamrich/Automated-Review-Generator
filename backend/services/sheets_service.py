@@ -253,9 +253,11 @@ def _get_review_by_token_sync(sheet_id: str, token: str) -> dict | None:
                     "row": row,
                     "client_name": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["client_name"]) - 1),
                     "company": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["company"]) - 1),
+                    "avg_rating": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["avg_rating"]) - 1),
                     "draft_text": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["draft_text"]) - 1),
                     "status": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["status"]) - 1),
                     "sent_at": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["sent_at"]) - 1),
+                    "regen_count": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["regen_count"]) - 1),
                     "token": token,
                 }
 
