@@ -170,6 +170,7 @@ COLUMN_MAP = {
     "sent_at": "Y",
     "copied_at": "Z",
     "error": "AA",
+    "regen_count": "AB",
 }
 
 
@@ -262,6 +263,88 @@ def _get_review_by_token_sync(sheet_id: str, token: str) -> dict | None:
 
     except Exception as e:
         logger.error(f"Failed to find token {token}: {e}")
+        return None
+
+
+async def get_full_submission_by_token(sheet_id: str, token: str) -> dict | None:
+    """
+    Find a submission row by token and return all data needed for regeneration.
+
+    Includes form ratings (Q1-Q8), Q10 feedback, CRM data, and system columns.
+
+    Args:
+        sheet_id: Google Sheet ID.
+        token: Unique consent token.
+
+    Returns:
+        Dict with full submission data, or None if not found.
+    """
+    return await asyncio.to_thread(_get_full_submission_by_token_sync, sheet_id, token)
+
+
+def _get_full_submission_by_token_sync(sheet_id: str, token: str) -> dict | None:
+    """Synchronous implementation of full submission lookup."""
+    if not sheet_id:
+        return None
+
+    try:
+        client = _get_client()
+        sheet = client.open_by_key(sheet_id).sheet1
+
+        token_col = COLUMN_MAP["token"]
+        all_tokens = sheet.col_values(_col_letter_to_num(token_col))
+
+        for i, cell_token in enumerate(all_tokens):
+            if cell_token == token:
+                row = i + 1
+                row_data = sheet.row_values(row)
+
+                # Form data columns: A=Timestamp, B=LinkedIn, C-J=Q1-Q8, K=Q9, L=Q10, M=Email
+                regen_count_str = _safe_get(
+                    row_data, _col_letter_to_num(COLUMN_MAP["regen_count"]) - 1
+                )
+
+                return {
+                    "row": row,
+                    # Form data (for Gemini regeneration)
+                    "q1": _parse_float(_safe_get(row_data, 2)),   # Column C
+                    "q2": _parse_float(_safe_get(row_data, 3)),   # Column D
+                    "q3": _parse_float(_safe_get(row_data, 4)),   # Column E
+                    "q4": _parse_float(_safe_get(row_data, 5)),   # Column F
+                    "q5": _parse_float(_safe_get(row_data, 6)),   # Column G
+                    "q6": _parse_float(_safe_get(row_data, 7)),   # Column H
+                    "q7": _parse_float(_safe_get(row_data, 8)),   # Column I
+                    "q8": _parse_float(_safe_get(row_data, 9)),   # Column J
+                    "q10_open_feedback": _safe_get(row_data, 11), # Column L
+                    "email": _safe_get(row_data, 12),             # Column M
+                    # System columns
+                    "avg_rating": _parse_float(
+                        _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["avg_rating"]) - 1)
+                    ),
+                    "client_name": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["client_name"]) - 1),
+                    "company": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["company"]) - 1),
+                    "services": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["services"]) - 1),
+                    "draft_text": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["draft_text"]) - 1),
+                    "status": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["status"]) - 1),
+                    "sent_at": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["sent_at"]) - 1),
+                    "delivery_method": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["delivery_method"]) - 1),
+                    "business_email": _safe_get(row_data, _col_letter_to_num(COLUMN_MAP["business_email"]) - 1),
+                    "token": token,
+                    "regen_count": int(regen_count_str) if regen_count_str.isdigit() else 0,
+                }
+
+        return None
+
+    except Exception as e:
+        logger.error(f"Failed to find full submission for token {token}: {e}")
+        return None
+
+
+def _parse_float(value: str) -> float | None:
+    """Safely parse a string to float, returning None on failure."""
+    try:
+        return float(value) if value else None
+    except (ValueError, TypeError):
         return None
 
 
