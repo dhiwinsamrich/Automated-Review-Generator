@@ -285,6 +285,71 @@ async def send_reminder_message(
     return await _send_whatsapp_message(payload)
 
 
+async def send_decline_message(
+    phone: str,
+    client_name: str,
+) -> dict:
+    """
+    Send a thank-you text message when the client declines the review.
+
+    Uses a free-form text message (not a template) since we are within
+    the 24-hour customer service window opened by the client's button tap.
+
+    Args:
+        phone: Client's WhatsApp number in E.164 format.
+        client_name: Client's name for personalization.
+
+    Returns:
+        Dict with 'success', 'message_id', and optionally 'error'.
+    """
+    payload = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": phone.replace("+", ""),
+        "type": "text",
+        "text": {
+            "body": (
+                f"Thank you for your time, {client_name}! "
+                "We appreciate your partnership with bdcode. "
+                "If you ever change your mind, feel free to reach out. 🙏"
+            ),
+        },
+    }
+
+    return await _send_whatsapp_message(payload)
+
+
+async def send_regen_limit_message(
+    phone: str,
+    client_name: str,
+) -> dict:
+    """
+    Send a text message informing the client that the regeneration limit is reached.
+
+    Args:
+        phone: Client's WhatsApp number in E.164 format.
+        client_name: Client's name for personalization.
+
+    Returns:
+        Dict with 'success', 'message_id', and optionally 'error'.
+    """
+    payload = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": phone.replace("+", ""),
+        "type": "text",
+        "text": {
+            "body": (
+                f"Hi {client_name}, you've already used your 2 revision requests. "
+                "Please approve the latest draft or decline if you'd prefer not to proceed. "
+                "Thank you! 🙏"
+            ),
+        },
+    }
+
+    return await _send_whatsapp_message(payload)
+
+
 def verify_webhook(mode: str, token: str, challenge: str) -> str | None:
     """
     Verify Meta webhook subscription (GET request verification).
@@ -344,6 +409,7 @@ async def _send_whatsapp_message(payload: dict) -> dict:
             if response.status_code != 200 or "error" in result:
                 error_msg = result.get("error", {}).get("message", "Unknown error")
                 logger.error(f"WhatsApp API error: {error_msg}")
+                logger.debug(f"WhatsApp API response: {result}")
                 return {"success": False, "error": error_msg}
 
             message_id = result.get("messages", [{}])[0].get("id", "")
