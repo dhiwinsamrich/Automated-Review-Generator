@@ -197,8 +197,73 @@ async def _handle_consent_response(
         )
 
     elif action == "edit":
-        logger.info(f"Review EDIT requested for row {row} by {from_number}")
+        logger.info(f"Review EDIT (regenerate) requested for row {row} by {from_number}")
 
+        # Fetch full submission data for regeneration
+        submission = await sheets_service.get_full_submission_by_token(sheet_id, token)
+        if not submission:
+            return WebhookResponse(
+                success=False,
+                message="Could not retrieve submission data for regeneration.",
+            )
+
+        settings = get_settings()
+        regen_count = submission.get("regen_count", 0)
+
+        # Check regeneration limit (max 2)
+        if regen_count >= settings.MAX_REGENERATIONS:
+            logger.warning(f"Regen limit reached for row {row} ({regen_count}/{settings.MAX_REGENERATIONS})")
+
+            await whatsapp_service.send_regen_limit_message(
+                phone=f"+{from_number}" if not from_number.startswith("+") else from_number,
+                client_name=client_name,
+            )
+
+            await sheets_service.log_audit_event(
+                sheet_id, "REGEN_LIMIT_REACHED", f"row_{row}",
+                f"Client hit regeneration limit ({regen_count}/{settings.MAX_REGENERATIONS}) via WhatsApp."
+            )
+
+            return WebhookResponse(
+                success=True,
+                message="Regeneration limit reached.",
+                data={"action": "edit", "row": row, "regen_limit": True},
+            )
+
+        # Build ratings breakdown from stored form data
+        ratings_breakdown = {
+            "q1": submission.get("q1"),
+            "q2": submission.get("q2"),
+            "q3": submission.get("q3"),
+            "q4": submission.get("q4"),
+            "q5": submission.get("q5"),
+            "q6": submission.get("q6"),
+            "q7": submission.get("q7"),
+            "q8": submission.get("q8"),
+        }
+
+        avg_rating = submission.get("avg_rating") or 0.0
+
+        try:
+            # Generate a fresh AI review draft
+            new_draft = await gemini_service.generate_review_draft(
+                client_name=client_name,
+                company=submission.get("company", ""),
+                services=submission.get("services", ""),
+                avg_rating=avg_rating,
+                ratings_breakdown=ratings_breakdown,
+                open_feedback=submission.get("q10_open_feedback", ""),
+            )
+        except Exception as e:
+            logger.error(f"Regeneration failed for row {row}: {e}")
+            return WebhookResponse(
+                success=False,
+                message="Failed to regenerate review draft.",
+            )
+
+        new_regen_count = regen_count + 1
+
+        # Update sheet with new draft and incremented regen count
         await sheets_service.update_submission_row(sheet_id, row, {
             "status": SubmissionStatus.EDITED.value,
         })
