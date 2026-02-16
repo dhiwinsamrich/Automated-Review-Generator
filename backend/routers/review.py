@@ -66,11 +66,30 @@ async def get_review(token: str):
         except ValueError:
             pass  # If date parsing fails, allow access
 
+    # Parse rating: avg_rating is a float like 9.5 (out of 10), convert to 1-5 stars
+    avg_rating_str = review_data.get("avg_rating", "")
+    try:
+        avg_rating = float(avg_rating_str) if avg_rating_str else 10.0
+        rating = max(1, min(5, round(avg_rating / 2)))
+    except (ValueError, TypeError):
+        rating = 5
+
+    # Parse regeneration count
+    regen_str = review_data.get("regen_count", "")
+    try:
+        regen_count = int(regen_str) if regen_str else 0
+    except (ValueError, TypeError):
+        regen_count = 0
+
     return ReviewResponse(
         draft_text=review_data.get("draft_text", ""),
         client_name=review_data.get("client_name", "Valued Client"),
+        business_name=review_data.get("company", "") or "Our Business",
+        rating=rating,
         gbp_review_url=settings.GBP_REVIEW_URL,
         status=review_data.get("status", SubmissionStatus.PENDING.value),
+        regeneration_count=regen_count,
+        max_regenerations=settings.MAX_REGENERATIONS,
     )
 
 
