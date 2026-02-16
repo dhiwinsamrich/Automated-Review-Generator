@@ -302,14 +302,20 @@ async def _handle_consent_response(
             "status": SubmissionStatus.DECLINED.value,
         })
 
+        # Send thank-you message
+        await whatsapp_service.send_decline_message(
+            phone=f"+{from_number}" if not from_number.startswith("+") else from_number,
+            client_name=client_name,
+        )
+
         await sheets_service.log_audit_event(
             sheet_id, "DECLINED", f"row_{row}",
-            "Client declined via WhatsApp. No further messages."
+            "Client declined via WhatsApp. Thank-you message sent."
         )
 
         return WebhookResponse(
             success=True,
-            message="Review declined. No further messages will be sent.",
+            message="Review declined. Thank-you message sent.",
             data={"action": "decline", "row": row},
         )
 
