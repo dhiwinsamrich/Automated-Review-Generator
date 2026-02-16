@@ -135,8 +135,12 @@ class ReviewResponse(BaseModel):
 
     draft_text: str
     client_name: str
+    business_name: str
+    rating: int
     gbp_review_url: str
     status: str
+    regeneration_count: int
+    max_regenerations: int
 
 
 # ─── Notification ─────────────────────────────────────────
