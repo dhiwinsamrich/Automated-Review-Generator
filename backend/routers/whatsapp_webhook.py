@@ -11,7 +11,7 @@ from fastapi.responses import PlainTextResponse
 
 from backend.config import get_settings
 from backend.models.schemas import SubmissionStatus, WebhookResponse, ClientData
-from backend.services import whatsapp_service, sheets_service, notification_service
+from backend.services import whatsapp_service, sheets_service, notification_service, gemini_service
 from backend.utils.logger import logger
 
 router = APIRouter(prefix="/api/webhook", tags=["Webhooks"])
@@ -56,6 +56,8 @@ async def handle_whatsapp_message(request: Request):
     except Exception:
         return WebhookResponse(success=False, message="Invalid JSON payload")
 
+    logger.info(f"WhatsApp webhook received: {body}")
+
     # Meta sends a complex nested structure — extract the message
     try:
         entry = body.get("entry", [{}])[0]
@@ -71,17 +73,38 @@ async def handle_whatsapp_message(request: Request):
         from_number = message.get("from", "")
         message_type = message.get("type", "")
 
-        # Handle interactive button replies (Approve/Edit/Decline)
+        # Handle interactive button replies (free-form interactive messages)
         if message_type == "interactive":
             interactive = message.get("interactive", {})
             button_reply = interactive.get("button_reply", {})
             button_id = button_reply.get("id", "")
 
-            logger.info(f"WhatsApp button reply from {from_number}: {button_id}")
+            logger.info(f"WhatsApp interactive button reply from {from_number}: {button_id}")
 
             # Parse action and token from button ID (format: "action_token")
             if "_" in button_id:
                 parts = button_id.split("_", 1)
+                action = parts[0]
+                token = parts[1]
+
+                return await _handle_consent_response(
+                    sheet_id=sheet_id,
+                    action=action,
+                    token=token,
+                    from_number=from_number,
+                )
+
+        # Handle template quick reply button responses (Approve/Edit/Decline)
+        # Template buttons arrive as type "button" with payload, NOT "interactive"
+        elif message_type == "button":
+            button = message.get("button", {})
+            button_payload = button.get("payload", "")
+
+            logger.info(f"WhatsApp template button reply from {from_number}: {button_payload}")
+
+            # Parse action and token from payload (format: "action_token")
+            if "_" in button_payload:
+                parts = button_payload.split("_", 1)
                 action = parts[0]
                 token = parts[1]
 
