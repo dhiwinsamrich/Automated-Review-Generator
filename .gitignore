@@ -45,3 +45,7 @@ logs/
 htmlcov/
 
 Notes.*
+
+# Project docs (local only)
+Application Concept/
+Local Run.txt
