@@ -33,6 +33,30 @@ async def get_review(token: str):
     settings = get_settings()
     sheet_id = settings.FORM_RESPONSES_SHEET_ID
 
+    # Demo mode: return hardcoded data for showcase/testing
+    if token == "demo":
+        return ReviewResponse(
+            draft_text=(
+                "Working with bdcode on our recent web development project was a genuinely "
+                "outstanding experience. From the initial kickoff meeting, it was clear they "
+                "took the time to thoroughly understand our goals and vision for the site. "
+                "Their project planning and management were particularly impressive — the "
+                "entire process was well-structured, and deadlines were consistently met.\n\n"
+                "The technical quality of the final product is exceptional, and we've seen a "
+                "noticeable improvement in site performance since launch. The team also "
+                "ensured a smooth handover, providing excellent training and support. "
+                "Overall, we're very happy with the outcome and the entire engagement "
+                "with bdcode."
+            ),
+            client_name="Dhiwin",
+            business_name="Acme Corp",
+            rating=5,
+            gbp_review_url=settings.GBP_REVIEW_URL or "https://search.google.com/local/writereview?placeid=ChIJ3Vl6h2VnUjoRSVUIybSlapU",
+            status=SubmissionStatus.APPROVED.value,
+            regeneration_count=0,
+            max_regenerations=settings.MAX_REGENERATIONS,
+        )
+
     if not sheet_id:
         raise HTTPException(
             status_code=500,
