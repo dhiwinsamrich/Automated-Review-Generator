@@ -7,7 +7,10 @@
       "Bash(do echo \"==== $docx ====\")",
       "Bash(done)",
       "Bash(python -c:*)",
-      "Bash(npx vite build:*)"
+      "Bash(npx vite build:*)",
+      "Bash(findstr:*)",
+      "Bash(dir:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }
