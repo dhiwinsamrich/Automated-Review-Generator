@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     WHATSAPP_API_VERSION: str = "v18.0"
     WHATSAPP_TEMPLATE_NAME: str = "review_consent"  # Message 1: consent request
     WHATSAPP_TEMPLATE_NAME_APPROVED: str = "review_approved"  # Message 2: approved with URL button
-    WHATSAPP_TEMPLATE_LANGUAGE: str = "en"
+    WHATSAPP_TEMPLATE_LANGUAGE: str = "en_US"
 
     # --- Email (SMTP Fallback) ---
     SMTP_HOST: str = "smtp.gmail.com"
