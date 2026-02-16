@@ -14,6 +14,7 @@ class ConsentAction(str, Enum):
     APPROVE = "approve"
     EDIT = "edit"
     DECLINE = "decline"
+    REGENERATE = "regenerate"
 
 
 class SubmissionStatus(str, Enum):
@@ -25,6 +26,7 @@ class SubmissionStatus(str, Enum):
     COPIED = "COPIED"
     POSTED = "POSTED"
     ALERT_SENT = "ALERT_SENT"
+    REGENERATED = "REGENERATED"
 
 
 class DeliveryMethod(str, Enum):
