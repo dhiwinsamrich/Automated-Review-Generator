@@ -5,6 +5,8 @@ Sends messages via the official WhatsApp Cloud API (Meta).
 Supports interactive messages with quick reply buttons and URL buttons.
 """
 
+import re
+
 import httpx
 
 from backend.config import get_settings
@@ -42,8 +44,12 @@ async def send_consent_message(
     settings = get_settings()
     to_number = phone.replace("+", "")
 
-    # Truncate draft for WhatsApp body (max ~1024 chars)
-    truncated_draft = _truncate(draft_text, 800)
+    # Sanitize draft for WhatsApp template parameters:
+    # - No newlines/tabs allowed in template params
+    # - No more than 4 consecutive spaces
+    sanitized_draft = draft_text.replace("\n", " ").replace("\t", " ")
+    sanitized_draft = re.sub(r" {4,}", "   ", sanitized_draft)
+    truncated_draft = _truncate(sanitized_draft, 800)
 
     template_name = settings.WHATSAPP_TEMPLATE_NAME
 
@@ -65,24 +71,13 @@ async def send_consent_message(
                             {"type": "text", "text": truncated_draft},
                         ],
                     },
-                    {
-                        "type": "button",
-                        "sub_type": "quick_reply",
-                        "index": "0",
-                        "parameters": [{"type": "payload", "payload": f"approve_{token}"}],
-                    },
-                    {
-                        "type": "button",
-                        "sub_type": "quick_reply",
-                        "index": "1",
-                        "parameters": [{"type": "payload", "payload": f"edit_{token}"}],
-                    },
-                    {
-                        "type": "button",
-                        "sub_type": "quick_reply",
-                        "index": "2",
-                        "parameters": [{"type": "payload", "payload": f"decline_{token}"}],
-                    },
+                    # Quick reply button payloads for webhook identification
+                    {"type": "button", "sub_type": "quick_reply", "index": "0",
+                     "parameters": [{"type": "payload", "payload": f"approve_{token}"}]},
+                    {"type": "button", "sub_type": "quick_reply", "index": "1",
+                     "parameters": [{"type": "payload", "payload": f"edit_{token}"}]},
+                    {"type": "button", "sub_type": "quick_reply", "index": "2",
+                     "parameters": [{"type": "payload", "payload": f"decline_{token}"}]},
                 ],
             },
         }
@@ -107,9 +102,11 @@ async def send_consent_message(
                 "body": {
                     "text": (
                         f"Hi {client_name},\n\n"
-                        f"Thank you for your feedback on our recent project! "
+                        f"Thank you for your feedback! "
                         f"Based on your responses, we've drafted a review for you:\n\n"
+                        f"---\n\n"
                         f'"{truncated_draft}"\n\n'
+                        f"---\n\n"
                         f"Would you like to post this review on Google?"
                     ),
                 },
@@ -129,7 +126,7 @@ async def send_consent_message(
                             "type": "reply",
                             "reply": {
                                 "id": f"edit_{token}",
-                                "title": "Edit",
+                                "title": "Re",
                             },
                         },
                         {
@@ -144,6 +141,7 @@ async def send_consent_message(
             },
         }
 
+    logger.info(f"WhatsApp payload for {template_name}: {payload}")
     return await _send_whatsapp_message(payload)
 
 
@@ -220,7 +218,7 @@ async def send_review_ready_message(
                 "body": {
                     "text": (
                         f"Great, {client_name}! Your review is ready.\n\n"
-                        f"Tap below to copy and post — takes just 10 seconds!"
+                        f"Tap below to view and copy your review — takes just 10 seconds!"
                     ),
                 },
                 "footer": {
