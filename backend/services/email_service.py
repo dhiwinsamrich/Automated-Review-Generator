@@ -5,6 +5,8 @@ Uses aiosmtplib for async SMTP email delivery.
 """
 
 import html as html_lib
+import uuid
+from email.utils import formataddr, formatdate
 
 import aiosmtplib
 from email.mime.text import MIMEText
@@ -23,18 +25,22 @@ async def send_consent_email(
     to_email: str,
     client_name: str,
     draft_text: str,
-    landing_page_url: str,
+    approve_url: str,
+    regenerate_url: str,
+    decline_url: str,
 ) -> bool:
     """
     Send the review consent email (fallback when WhatsApp unavailable).
 
-    Includes the draft text and a CTA button linking to the landing page.
+    Includes the draft text and Approve / Regenerate / Decline buttons.
 
     Args:
         to_email: Client's email address.
         client_name: Client's name for personalization.
         draft_text: AI-generated review draft.
-        landing_page_url: URL to the copy+redirect landing page.
+        approve_url: URL to approve the review.
+        regenerate_url: URL to request a new draft.
+        decline_url: URL to decline the review.
 
     Returns:
         True if email sent successfully, False otherwise.
@@ -42,7 +48,7 @@ async def send_consent_email(
     safe_name = _esc(client_name)
     safe_draft = _esc(draft_text)
 
-    subject = "Your Review Draft for bdcode — Quick Action Needed"
+    subject = "Your Review Draft from bdcode is Ready"
 
     html_body = f"""
     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -67,12 +73,93 @@ async def send_consent_email(
             </div>
 
             <p style="color: #333; line-height: 1.6;">
-                Click the button below to copy and post this review on Google:
+                Would you like to use this review? Choose an option below:
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{approve_url}"
+                   style="display: inline-block; background: #28A745; color: white;
+                          padding: 14px 28px; text-decoration: none; border-radius: 8px;
+                          font-weight: 600; font-size: 15px; margin: 6px;">
+                    Approve
+                </a>
+                <a href="{regenerate_url}"
+                   style="display: inline-block; background: #4285F4; color: white;
+                          padding: 14px 28px; text-decoration: none; border-radius: 8px;
+                          font-weight: 600; font-size: 15px; margin: 6px;">
+                    Regenerate
+                </a>
+                <a href="{decline_url}"
+                   style="display: inline-block; background: #6C757D; color: white;
+                          padding: 14px 28px; text-decoration: none; border-radius: 8px;
+                          font-weight: 600; font-size: 15px; margin: 6px;">
+                    Decline
+                </a>
+            </div>
+        </div>
+
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 0 0 12px 12px;
+                    text-align: center; border: 1px solid #e9ecef; border-top: none;">
+            <p style="color: #999; margin: 0; font-size: 12px;">
+                bdcode — Thank you for your partnership
+            </p>
+        </div>
+    </div>
+    """
+
+    plain_text = (
+        f"Hi {client_name},\n\n"
+        f"We've drafted a review based on your feedback:\n\n"
+        f'"{draft_text}"\n\n'
+        f"Approve: {approve_url}\n"
+        f"Regenerate: {regenerate_url}\n"
+        f"Decline: {decline_url}\n\n"
+        f"— bdcode Team"
+    )
+
+    return await _send_email(to_email, subject, html_body, plain_text)
+
+
+async def send_approval_email(
+    to_email: str,
+    client_name: str,
+    landing_page_url: str,
+) -> bool:
+    """
+    Send the approval confirmation email with a link to copy & post the review.
+
+    Sent after the client clicks Approve in the consent email.
+
+    Args:
+        to_email: Client's email address.
+        client_name: Client's name.
+        landing_page_url: URL to the landing page where they can copy the review.
+
+    Returns:
+        True if email sent successfully.
+    """
+    safe_name = _esc(client_name)
+
+    subject = "Your Review is Approved — Post It Now!"
+
+    html_body = f"""
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #1F4E79 0%, #2E75B6 100%);
+                    padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">bdcode</h1>
+        </div>
+
+        <div style="background: #ffffff; padding: 30px; border: 1px solid #e9ecef;">
+            <h2 style="color: #1F4E79; margin-top: 0;">Hi {safe_name},</h2>
+
+            <p style="color: #333; line-height: 1.6;">
+                Thank you for approving the review! Click the button below to copy
+                the review text and post it on Google:
             </p>
 
             <div style="text-align: center; margin: 30px 0;">
                 <a href="{landing_page_url}"
-                   style="display: inline-block; background: #4285F4; color: white;
+                   style="display: inline-block; background: #28A745; color: white;
                           padding: 14px 32px; text-decoration: none; border-radius: 8px;
                           font-weight: 600; font-size: 16px;">
                     Copy & Post Review
@@ -91,8 +178,186 @@ async def send_consent_email(
 
     plain_text = (
         f"Hi {client_name},\n\n"
-        f"Your review draft is ready: {landing_page_url}\n\n"
-        f'Draft: "{draft_text}"\n\n'
+        f"Thank you for approving the review!\n\n"
+        f"Copy & post it here: {landing_page_url}\n\n"
+        f"— bdcode Team"
+    )
+
+    return await _send_email(to_email, subject, html_body, plain_text)
+
+
+async def send_regenerated_email(
+    to_email: str,
+    client_name: str,
+    draft_text: str,
+    approve_url: str,
+    regenerate_url: str | None,
+    decline_url: str,
+    regen_count: int,
+) -> bool:
+    """
+    Send a new draft email after regeneration.
+
+    If regen limit is reached, the Regenerate button is hidden.
+
+    Args:
+        to_email: Client's email address.
+        client_name: Client's name.
+        draft_text: New AI-generated review draft.
+        approve_url: URL to approve.
+        regenerate_url: URL to regenerate again (None if limit reached).
+        decline_url: URL to decline.
+        regen_count: Current regeneration count.
+
+    Returns:
+        True if email sent successfully.
+    """
+    settings = get_settings()
+    safe_name = _esc(client_name)
+    safe_draft = _esc(draft_text)
+    is_final = regen_count >= settings.MAX_REGENERATIONS
+
+    subject = "Your New Review Draft from bdcode"
+
+    # Build regenerate button only if not at limit
+    regenerate_button = ""
+    regenerate_plain = ""
+    if not is_final and regenerate_url:
+        regenerate_button = f"""
+                <a href="{regenerate_url}"
+                   style="display: inline-block; background: #4285F4; color: white;
+                          padding: 14px 28px; text-decoration: none; border-radius: 8px;
+                          font-weight: 600; font-size: 15px; margin: 6px;">
+                    Regenerate
+                </a>"""
+        regenerate_plain = f"Regenerate: {regenerate_url}\n"
+
+    final_notice = ""
+    if is_final:
+        final_notice = """
+            <p style="color: #856404; background: #FFF3CD; padding: 12px; border-radius: 6px;
+                      font-size: 14px; text-align: center;">
+                This is your final revision. Please approve or decline this draft.
+            </p>"""
+
+    html_body = f"""
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #1F4E79 0%, #2E75B6 100%);
+                    padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">bdcode</h1>
+        </div>
+
+        <div style="background: #ffffff; padding: 30px; border: 1px solid #e9ecef;">
+            <h2 style="color: #1F4E79; margin-top: 0;">Hi {safe_name},</h2>
+
+            <p style="color: #333; line-height: 1.6;">
+                Here's a new version of your review draft (revision {regen_count}):
+            </p>
+
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;
+                        border-left: 4px solid #1F4E79; margin: 20px 0;">
+                <p style="font-style: italic; margin: 0; color: #333; line-height: 1.6;">
+                    "{safe_draft}"
+                </p>
+            </div>
+
+            {final_notice}
+
+            <p style="color: #333; line-height: 1.6;">
+                Choose an option below:
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{approve_url}"
+                   style="display: inline-block; background: #28A745; color: white;
+                          padding: 14px 28px; text-decoration: none; border-radius: 8px;
+                          font-weight: 600; font-size: 15px; margin: 6px;">
+                    Approve
+                </a>{regenerate_button}
+                <a href="{decline_url}"
+                   style="display: inline-block; background: #6C757D; color: white;
+                          padding: 14px 28px; text-decoration: none; border-radius: 8px;
+                          font-weight: 600; font-size: 15px; margin: 6px;">
+                    Decline
+                </a>
+            </div>
+        </div>
+
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 0 0 12px 12px;
+                    text-align: center; border: 1px solid #e9ecef; border-top: none;">
+            <p style="color: #999; margin: 0; font-size: 12px;">
+                bdcode — Thank you for your partnership
+            </p>
+        </div>
+    </div>
+    """
+
+    final_plain = " (final revision)" if is_final else ""
+    plain_text = (
+        f"Hi {client_name},\n\n"
+        f"Here's a new version of your review draft{final_plain}:\n\n"
+        f'"{draft_text}"\n\n'
+        f"Approve: {approve_url}\n"
+        f"{regenerate_plain}"
+        f"Decline: {decline_url}\n\n"
+        f"— bdcode Team"
+    )
+
+    return await _send_email(to_email, subject, html_body, plain_text)
+
+
+async def send_decline_email(
+    to_email: str,
+    client_name: str,
+) -> bool:
+    """
+    Send a thank-you email after the client declines the review.
+
+    Args:
+        to_email: Client's email address.
+        client_name: Client's name.
+
+    Returns:
+        True if email sent successfully.
+    """
+    safe_name = _esc(client_name)
+
+    subject = "Thank You for Your Feedback — bdcode"
+
+    html_body = f"""
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #1F4E79 0%, #2E75B6 100%);
+                    padding: 30px; border-radius: 12px 12px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 24px;">bdcode</h1>
+        </div>
+
+        <div style="background: #ffffff; padding: 30px; border: 1px solid #e9ecef;">
+            <h2 style="color: #1F4E79; margin-top: 0;">Hi {safe_name},</h2>
+
+            <p style="color: #333; line-height: 1.6;">
+                Thank you for your time and for sharing your feedback with us.
+                We truly appreciate your partnership and value your input.
+            </p>
+
+            <p style="color: #333; line-height: 1.6;">
+                If you change your mind or have any questions, feel free to reach out
+                to us anytime.
+            </p>
+        </div>
+
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 0 0 12px 12px;
+                    text-align: center; border: 1px solid #e9ecef; border-top: none;">
+            <p style="color: #999; margin: 0; font-size: 12px;">
+                bdcode — Thank you for your partnership
+            </p>
+        </div>
+    </div>
+    """
+
+    plain_text = (
+        f"Hi {client_name},\n\n"
+        f"Thank you for your time and for sharing your feedback with us.\n"
+        f"We truly appreciate your partnership.\n\n"
         f"— bdcode Team"
     )
 
@@ -192,10 +457,19 @@ async def send_internal_alert(
     </div>
     """
 
+    plain_text = (
+        f"{banner_title}\n\n"
+        f"Client: {client_name}\n"
+        f"Company: {company or 'N/A'}\n"
+        f"Average Rating: {avg_rating:.1f}/10\n"
+        f"{f'Feedback: {open_feedback}' if open_feedback else ''}\n\n"
+        f"Action: {action_text}\n"
+    )
+
     # Send to all alert recipients
     success = True
     for recipient in recipients:
-        result = await _send_email(recipient, subject, html_body)
+        result = await _send_email(recipient, subject, html_body, plain_text)
         if not result:
             success = False
 
@@ -231,13 +505,27 @@ async def _send_email(
 
     try:
         message = MIMEMultipart("alternative")
-        message["From"] = f"{settings.SMTP_FROM_NAME} <{settings.SMTP_FROM_EMAIL}>"
+
+        # Core headers
+        message["From"] = formataddr((settings.SMTP_FROM_NAME, settings.SMTP_FROM_EMAIL))
         message["To"] = to_email
         message["Subject"] = subject
+        message["Reply-To"] = settings.SMTP_FROM_EMAIL
+        message["Date"] = formatdate(localtime=True)
+        message["Message-ID"] = f"<{uuid.uuid4()}@{settings.SMTP_FROM_EMAIL.split('@')[-1]}>"
 
+        # Anti-spam headers
+        message["MIME-Version"] = "1.0"
+        message["X-Mailer"] = "bdcode Review Generator"
+        message["Precedence"] = "bulk"
+
+        # Plain text MUST come first (spam filters check for it)
         if plain_text:
-            message.attach(MIMEText(plain_text, "plain"))
-        message.attach(MIMEText(html_body, "html"))
+            message.attach(MIMEText(plain_text, "plain", "utf-8"))
+        else:
+            # Always include a plain-text version
+            message.attach(MIMEText("Please view this email in an HTML-compatible client.", "plain", "utf-8"))
+        message.attach(MIMEText(html_body, "html", "utf-8"))
 
         await aiosmtplib.send(
             message,
