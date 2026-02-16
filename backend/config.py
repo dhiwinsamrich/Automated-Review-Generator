@@ -43,10 +43,13 @@ class Settings(BaseSettings):
     # --- Qualification ---
     RATING_THRESHOLD: float = 8.0
 
+    # --- Email Regeneration ---
+    MAX_REGENERATIONS: int = 2
+
     # --- Application ---
     APP_BASE_URL: str = "http://localhost:8000"
-    # FRONTEND_URL: str = "http://localhost:5173"
-    FRONTEND_URL: str = "https://automated-review-generator.vercel.app"
+    FRONTEND_URL: str = "http://localhost:8080"
+    # FRONTEND_URL: str = "https://automated-review-generator.vercel.app"
 
     # --- Webhook Security ---
     WEBHOOK_SECRET: str = ""
