@@ -56,7 +56,6 @@ async def send_review_notification(
         )
 
     # Step 2: Fallback to email
-    landing_url = _build_landing_url(token)
     email_target = client_data.business_email
 
     if not email_target:
@@ -67,12 +66,17 @@ async def send_review_notification(
             error="No contact method available",
         )
 
+    # Build email action URLs for Approve/Regenerate/Decline
+    approve_url, regenerate_url, decline_url = _build_email_action_urls(token)
+
     logger.info(f"Sending email fallback to {email_target}")
     email_success = await email_service.send_consent_email(
         to_email=email_target,
         client_name=client_data.name,
         draft_text=draft_text,
-        landing_page_url=landing_url,
+        approve_url=approve_url,
+        regenerate_url=regenerate_url,
+        decline_url=decline_url,
     )
 
     if email_success:
@@ -123,12 +127,11 @@ async def send_approval_notification(
                 message_id=wa_result.get("message_id"),
             )
 
-    # Email fallback — same landing page URL
+    # Email fallback — send approval email with landing page link
     if client_data.business_email:
-        email_success = await email_service.send_consent_email(
+        email_success = await email_service.send_approval_email(
             to_email=client_data.business_email,
             client_name=client_data.name,
-            draft_text="Your approved review is ready to post!",
             landing_page_url=landing_url,
         )
 
@@ -176,3 +179,10 @@ def _build_landing_url(token: str) -> str:
     """Build the landing page URL with the review token."""
     settings = get_settings()
     return f"{settings.FRONTEND_URL}/review/{token}"
+
+
+def _build_email_action_urls(token: str) -> tuple[str, str, str]:
+    """Build the Approve/Regenerate/Decline action URLs for email buttons."""
+    settings = get_settings()
+    base = f"{settings.APP_BASE_URL}/api/email-action/{token}"
+    return f"{base}/approve", f"{base}/regenerate", f"{base}/decline"
