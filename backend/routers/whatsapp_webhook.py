@@ -265,19 +265,34 @@ async def _handle_consent_response(
 
         # Update sheet with new draft and incremented regen count
         await sheets_service.update_submission_row(sheet_id, row, {
-            "status": SubmissionStatus.EDITED.value,
+            "draft_text": new_draft,
+            "regen_count": new_regen_count,
+            "status": SubmissionStatus.SENT.value,
         })
 
-        await sheets_service.log_audit_event(
-            sheet_id, "EDIT_REQUESTED", f"row_{row}",
-            "Client requested edit via WhatsApp."
+        # Resend the review_consent template with the new draft
+        wa_result = await whatsapp_service.send_consent_message(
+            phone=f"+{from_number}" if not from_number.startswith("+") else from_number,
+            client_name=client_name,
+            draft_text=new_draft,
+            token=token,
         )
 
-        # TODO Phase 2: Implement edit flow (regenerate or collect edits)
+        await sheets_service.log_audit_event(
+            sheet_id, "REGENERATED_VIA_WHATSAPP", f"row_{row}",
+            f"Client requested regeneration ({new_regen_count}/{settings.MAX_REGENERATIONS}). "
+            f"New draft sent via WhatsApp: {wa_result.get('success')}"
+        )
+
+        logger.info(
+            f"Review regenerated for row {row} "
+            f"({new_regen_count}/{settings.MAX_REGENERATIONS})"
+        )
+
         return WebhookResponse(
             success=True,
-            message="Edit request received. We'll send you an updated draft soon.",
-            data={"action": "edit", "row": row},
+            message=f"Regenerated review draft ({new_regen_count}/{settings.MAX_REGENERATIONS}). New draft sent.",
+            data={"action": "edit", "row": row, "regen_count": new_regen_count},
         )
 
     elif action == "decline":
