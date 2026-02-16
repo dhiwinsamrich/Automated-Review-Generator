@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import get_settings
-from backend.routers import form_webhook, whatsapp_webhook, review
+from backend.routers import form_webhook, whatsapp_webhook, review, email_action
 from backend.utils.logger import logger
 
 
@@ -63,7 +63,7 @@ settings = get_settings()
 allowed_origins = [settings.FRONTEND_URL, "https://automated-review-generator.vercel.app"]
 if settings.ENVIRONMENT == "development":
     allowed_origins.extend([
-        "http://localhost:5173",
+        "http://localhost:8080",
         "http://localhost:3000",
     ])
 # Deduplicate
@@ -82,6 +82,7 @@ app.add_middleware(
 app.include_router(form_webhook.router)
 app.include_router(whatsapp_webhook.router)
 app.include_router(review.router)
+app.include_router(email_action.router)
 
 
 # ─── Health Check ─────────────────────────────────────────
@@ -120,6 +121,7 @@ async def root():
             "form_webhook": "POST /api/webhook/form",
             "whatsapp_webhook": "GET/POST /api/webhook/whatsapp",
             "review": "GET /api/review/{token}",
+            "email_action": "GET /api/email-action/{token}/{action}",
             "health": "GET /health",
         },
     }
