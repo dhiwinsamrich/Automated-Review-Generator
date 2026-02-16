@@ -85,13 +85,13 @@ async def generate_review_draft(
             if draft.startswith("'") and draft.endswith("'"):
                 draft = draft[1:-1]
 
-            # Validate word count (BRD requires 100-200 words)
+            # Validate word count (target: 20-80 words)
             word_count = len(draft.split())
             logger.info(
-                f"Review draft generated: {word_count} words (target: 100-200)"
+                f"Review draft generated: {word_count} words (target: 20-80)"
             )
 
-            if word_count < 80 or word_count > 250:
+            if word_count < 15 or word_count > 100:
                 logger.warning(
                     f"Draft word count {word_count} outside acceptable range, "
                     f"retrying..."
