@@ -24,7 +24,7 @@
  * For local development with ngrok: https://xxxx.ngrok.io/api/webhook/form
  * For production: https://your-server.com/api/webhook/form
  */
-const WEBHOOK_URL = 'https://3e80-27-4-14-46.ngrok-free.app/api/webhook/form';
+const WEBHOOK_URL = 'https://cd9c-115-97-59-234.ngrok-free.app/api/webhook/form';
 
 /**
  * Optional: webhook secret for request authentication.
@@ -177,11 +177,12 @@ function showColumnMapping() {
         'T: Business Email (from CRM)',
         'U: Draft Text (AI generated)',
         'V: Consent Token',
-        'W: Status (PENDING/SENT/APPROVED/DECLINED/COPIED)',
+        'W: Status (PENDING/SENT/APPROVED/DECLINED/COPIED/REGENERATED)',
         'X: Delivery Method (WHATSAPP/EMAIL)',
         'Y: Sent At',
         'Z: Copied At',
-        'AA: Error Log'
+        'AA: Error Log',
+        'AB: Regen Count'
     ];
 
     Logger.log(mapping.join('\n'));
