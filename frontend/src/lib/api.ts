@@ -2,7 +2,7 @@
 // Switch to real endpoints by changing USE_MOCK to false
 
 const USE_MOCK = false;
-const API_BASE = "/api";
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 
 export interface ReviewData {
   client_name: string;
