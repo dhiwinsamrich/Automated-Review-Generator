@@ -65,6 +65,26 @@ const Index = () => {
             </div>
           ))}
         </motion.div>
+
+        {/* Footer links */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+          className="flex flex-wrap justify-center gap-4 text-xs text-muted-foreground"
+        >
+          <Link to="/privacy-policy" className="hover:text-foreground transition-colors">
+            Privacy Policy
+          </Link>
+          <span className="text-muted-foreground/30">|</span>
+          <Link to="/terms-and-conditions" className="hover:text-foreground transition-colors">
+            Terms & Conditions
+          </Link>
+          <span className="text-muted-foreground/30">|</span>
+          <Link to="/terms-of-service" className="hover:text-foreground transition-colors">
+            Terms of Service
+          </Link>
+        </motion.div>
       </div>
     </div>
   );
