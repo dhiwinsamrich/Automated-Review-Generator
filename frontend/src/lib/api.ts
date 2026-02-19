@@ -37,7 +37,9 @@ export async function fetchReview(token: string): Promise<ReviewData> {
     return { ...mockReview };
   }
 
-  const res = await fetch(`${API_BASE}/review/${token}`);
+  const res = await fetch(`${API_BASE}/review/${token}`, {
+    headers: { "ngrok-skip-browser-warning": "true" },
+  });
   if (!res.ok) {
     throw { status: res.status, message: await res.text() };
   }
@@ -52,6 +54,7 @@ export async function markCopied(token: string): Promise<void> {
 
   const res = await fetch(`${API_BASE}/review/${token}/copied`, {
     method: "POST",
+    headers: { "ngrok-skip-browser-warning": "true" },
   });
   if (!res.ok) throw { status: res.status, message: await res.text() };
 }
