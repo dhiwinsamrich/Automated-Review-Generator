@@ -72,6 +72,12 @@ async def handle_whatsapp_message(request: Request):
         message = messages[0]
         from_number = message.get("from", "")
         message_type = message.get("type", "")
+        message_id = message.get("id", "")
+
+        # Send read receipt and typing indicator before processing
+        if message_id:
+            await whatsapp_service.send_read_receipt(message_id)
+            await whatsapp_service.send_typing_indicator(message_id)
 
         # Handle interactive button replies (free-form interactive messages)
         if message_type == "interactive":
