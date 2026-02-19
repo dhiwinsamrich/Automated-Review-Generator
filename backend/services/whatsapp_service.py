@@ -350,6 +350,51 @@ async def send_regen_limit_message(
     return await _send_whatsapp_message(payload)
 
 
+async def send_read_receipt(message_id: str) -> dict:
+    """
+    Mark a WhatsApp message as read (blue ticks).
+
+    Args:
+        message_id: The WhatsApp message ID to mark as read.
+
+    Returns:
+        Dict with 'success' and optionally 'error'.
+    """
+    payload = {
+        "messaging_product": "whatsapp",
+        "status": "read",
+        "message_id": message_id,
+    }
+
+    return await _send_whatsapp_message(payload)
+
+
+async def send_typing_indicator(message_id: str) -> dict:
+    """
+    Send a typing indicator (shown as "typing..." in the chat).
+
+    Args:
+        message_id: The WhatsApp message ID to show typing for.
+
+    Returns:
+        Dict with 'success', 'message_id', and optionally 'error'.
+    """
+    logger.info(f"Sending typing indicator, Message ID: {message_id}")
+
+    payload = {
+        "messaging_product": "whatsapp",
+        "status": "read",
+        "message_id": message_id,
+        "typing_indicator": {
+            "type": "text",
+        },
+    }
+
+    result = await _send_whatsapp_message(payload)
+    logger.info(f"Typing indicator response: {result}")
+    return result
+
+
 def verify_webhook(mode: str, token: str, challenge: str) -> str | None:
     """
     Verify Meta webhook subscription (GET request verification).
