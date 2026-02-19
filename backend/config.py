@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     WHATSAPP_ACCESS_TOKEN: str = ""
     WHATSAPP_PHONE_NUMBER_ID: str = ""
     WHATSAPP_VERIFY_TOKEN: str = ""
-    WHATSAPP_API_VERSION: str = "v18.0"
+    WHATSAPP_API_VERSION: str = "v22.0"
     WHATSAPP_TEMPLATE_NAME: str = "review_consent"  # Message 1: consent request
     WHATSAPP_TEMPLATE_NAME_APPROVED: str = "review_approved"  # Message 2: approved with URL button
     WHATSAPP_TEMPLATE_LANGUAGE: str = "en_US"
