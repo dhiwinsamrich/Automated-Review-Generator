@@ -24,7 +24,7 @@
  * For local development with ngrok: https://xxxx.ngrok.io/api/webhook/form
  * For production: https://your-server.com/api/webhook/form
  */
-const WEBHOOK_URL = 'https://cd9c-115-97-59-234.ngrok-free.app/api/webhook/form';
+const WEBHOOK_URL = 'https://f376-115-97-59-234.ngrok-free.app/api/webhook/form';
 
 /**
  * Optional: webhook secret for request authentication.
