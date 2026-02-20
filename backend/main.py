@@ -63,7 +63,7 @@ settings = get_settings()
 allowed_origins = [settings.FRONTEND_URL, "https://automated-review-generator.vercel.app"]
 if settings.ENVIRONMENT == "development":
     allowed_origins.extend([
-        "http://localhost:8080",
+        "http://localhost:4003",
         "http://localhost:3000",
     ])
 # Deduplicate
