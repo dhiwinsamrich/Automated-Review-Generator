@@ -23,95 +23,167 @@ const PrivacyPolicyPage = () => {
             <div className="space-y-2">
               <h1 className="text-3xl font-bold text-foreground">Privacy Policy</h1>
               <p className="text-sm text-muted-foreground">
-                Last updated: February 19, 2026
+                Last updated: 18-02-2026
               </p>
             </div>
 
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-foreground">1. Introduction</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                bdcode ("we", "our", or "us") operates the Automated Review Generator
-                service. This Privacy Policy explains how we collect, use, disclose, and
-                safeguard your information when you use our service, including interactions
-                via WhatsApp, email, and our website.
+                bdcode_ ("bdcode_", "we", "our", or "us") operates the website https://www.bdcode.in/ and provides technology, development, consulting, and related services (the "Services").
+              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                We value and respect the privacy of our clients, website visitors, partners, vendors, and job applicants. This Privacy Policy explains how we collect, use, disclose, store, and safeguard your personal information.
               </p>
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-foreground">2. Information We Collect</h2>
+              <h2 className="text-xl font-semibold text-foreground">Changes to This Privacy Policy</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                We may collect the following types of information:
+                We may update this Privacy Policy from time to time to reflect changes in our services, applicable laws, or privacy practices. Updates will be reflected by revising the "Last Updated" date. Continued use of the Website constitutes acceptance of the revised policy.
               </p>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-xl font-semibold text-foreground">Your Consent</h2>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1.5 ml-2">
-                <li><span className="text-foreground font-medium">Personal Information:</span> Name, phone number, email address, and company name provided through feedback forms.</li>
-                <li><span className="text-foreground font-medium">Feedback Data:</span> Ratings and open-text responses submitted through our forms.</li>
-                <li><span className="text-foreground font-medium">Communication Data:</span> WhatsApp message metadata (message IDs, delivery status) and email interactions.</li>
-                <li><span className="text-foreground font-medium">Usage Data:</span> Interactions with our landing pages, such as review copy events.</li>
+                <li>Visiting our Website</li>
+                <li>Submitting forms</li>
+                <li>Contacting us via email or WhatsApp</li>
+                <li>Applying for jobs</li>
+                <li>Engaging our Services</li>
+              </ul>
+              <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+                You consent to the collection and use of your information as described in this Privacy Policy. You may withdraw consent at any time by contacting <a href="mailto:sales@bdcode.in" className="text-primary hover:underline">sales@bdcode.in</a>.
+              </p>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-xl font-semibold text-foreground">Information We Collect</h2>
+
+              <div className="space-y-2">
+                <h3 className="text-md font-medium text-foreground">A. Personal Information</h3>
+                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1.5 ml-2">
+                  <li>Name</li>
+                  <li>Email address</li>
+                  <li>Phone number</li>
+                  <li>Company name</li>
+                  <li>Job title</li>
+                  <li>Address</li>
+                  <li>Resume and job application details</li>
+                  <li>Information submitted via contact forms</li>
+                  <li>Project-related communications</li>
+                </ul>
+              </div>
+
+              <div className="space-y-2 mt-4">
+                <h3 className="text-md font-medium text-foreground">B. Automatically Collected Information</h3>
+                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1.5 ml-2">
+                  <li>IP address</li>
+                  <li>Browser and device information</li>
+                  <li>Operating system</li>
+                  <li>Pages visited and time spent</li>
+                  <li>Referring URLs</li>
+                </ul>
+              </div>
+
+              <div className="space-y-2 mt-4">
+                <h3 className="text-md font-medium text-foreground">C. Analytics Information</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  We may use analytics tools such as Google Analytics to understand website usage, improve performance, and enhance user experience.
+                </p>
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-xl font-semibold text-foreground">How We Use Your Information</h2>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1.5 ml-2">
+                <li>Provide and deliver Services</li>
+                <li>Respond to inquiries and proposals</li>
+                <li>Communicate about projects and contracts</li>
+                <li>Process job applications</li>
+                <li>Improve Website performance</li>
+                <li>Ensure legal and regulatory compliance</li>
+                <li>Prevent fraud and misuse</li>
               </ul>
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-foreground">3. How We Use Your Information</h2>
+              <h2 className="text-xl font-semibold text-foreground">How We Share Information</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                We do not sell or rent your personal data. Information may be shared only:
+              </p>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1.5 ml-2">
-                <li>To generate personalized review drafts using AI based on your feedback.</li>
-                <li>To send review drafts and approval requests via WhatsApp or email.</li>
-                <li>To facilitate posting approved reviews on Google Business Profile.</li>
-                <li>To send follow-up reminders for pending reviews.</li>
-                <li>To improve our services and user experience.</li>
+                <li>With trusted service providers (hosting, CRM, email tools)</li>
+                <li>For legal or regulatory compliance</li>
+                <li>During business transfers such as mergers or acquisitions</li>
+                <li>With your explicit consent</li>
               </ul>
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-foreground">4. Third-Party Services</h2>
+              <h2 className="text-xl font-semibold text-foreground">Data Security</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                We use the following third-party services that may process your data:
+                We implement reasonable administrative, technical, and physical safeguards including secure servers, encryption, access controls, and internal data restrictions.
               </p>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-xl font-semibold text-foreground">Data Retention</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Personal data is retained only as long as required for service delivery, legal obligations, or legitimate business purposes, after which it is securely deleted or anonymized.
+              </p>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-xl font-semibold text-foreground">Your Rights (DPDP Act 2023)</h2>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1.5 ml-2">
-                <li><span className="text-foreground font-medium">Meta (WhatsApp Business API):</span> For sending and receiving messages.</li>
-                <li><span className="text-foreground font-medium">Google Cloud:</span> For data storage (Google Sheets) and AI services (Gemini).</li>
-                <li><span className="text-foreground font-medium">Vercel:</span> For hosting our web application.</li>
+                <li>Access your personal data</li>
+                <li>Correct inaccurate data</li>
+                <li>Request deletion</li>
+                <li>Withdraw consent</li>
+                <li>Grievance redressal</li>
+                <li>Nominate a representative</li>
               </ul>
-            </section>
-
-            <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-foreground">5. Data Retention</h2>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                We retain your personal information only for as long as necessary to fulfill
-                the purposes outlined in this policy. Review consent tokens expire after 14
-                days, after which the associated links become inactive.
+              <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+                To exercise these rights, contact <a href="mailto:sales@bdcode.in" className="text-primary hover:underline">sales@bdcode.in</a>.
               </p>
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-foreground">6. Data Security</h2>
+              <h2 className="text-xl font-semibold text-foreground">Children's Privacy</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                We implement appropriate technical and organizational measures to protect
-                your personal information, including encrypted communications (HTTPS/TLS),
-                secure API authentication, and access controls on stored data.
+                Our Website and Services are not intended for individuals under 18 years of age. We do not knowingly collect personal data from children.
               </p>
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-foreground">7. Your Rights</h2>
+              <h2 className="text-xl font-semibold text-foreground">Third-Party Links</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Depending on your location, you may have the right to:
+                Our Website may contain links to third-party websites. We are not responsible for their privacy practices and encourage you to review their policies separately.
               </p>
-              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1.5 ml-2">
-                <li>Access the personal data we hold about you.</li>
-                <li>Request correction or deletion of your data.</li>
-                <li>Withdraw consent for data processing.</li>
-                <li>Object to or restrict processing of your data.</li>
-              </ul>
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-xl font-semibold text-foreground">8. Contact Us</h2>
+              <h2 className="text-xl font-semibold text-foreground">International Data Transfers</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                If you have any questions about this Privacy Policy, please contact us at{" "}
-                <a href="mailto:subscriptionoff12@gmail.com" className="text-primary hover:underline">
-                  subscriptionoff12@gmail.com
-                </a>.
+                If you access our Website from outside India, your data may be transferred to and processed in India or other jurisdictions.
               </p>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-xl font-semibold text-foreground">No SMS / WhatsApp Marketing Disclosure</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Mobile numbers and opt-in data collected for communication purposes will not be shared with third parties for marketing or promotional activities.
+              </p>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-xl font-semibold text-foreground">Contact Us</h2>
+              <div className="text-sm text-muted-foreground leading-relaxed">
+                <p className="font-medium text-foreground">bdcode_</p>
+                <p>Website: <a href="https://www.bdcode.in/" className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">https://www.bdcode.in/</a></p>
+                <p>Email: <a href="mailto:sales@bdcode.in" className="text-primary hover:underline">sales@bdcode.in</a></p>
+              </div>
             </section>
           </div>
         </motion.div>
