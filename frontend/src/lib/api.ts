@@ -30,7 +30,7 @@ const mockReview: ReviewData = {
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export async function fetchReview(token: string): Promise<ReviewData> {
-  if (USE_MOCK) {
+  if (USE_MOCK || token === "demo") {
     await delay(1200);
     if (token === "expired") throw { status: 410, message: "Link has expired" };
     if (token === "error") throw { status: 500, message: "Server error" };
@@ -47,7 +47,7 @@ export async function fetchReview(token: string): Promise<ReviewData> {
 }
 
 export async function markCopied(token: string): Promise<void> {
-  if (USE_MOCK) {
+  if (USE_MOCK || token === "demo") {
     await delay(400);
     return;
   }
