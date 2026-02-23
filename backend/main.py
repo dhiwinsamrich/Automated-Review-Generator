@@ -60,7 +60,7 @@ app = FastAPI(
 settings = get_settings()
 
 # Always allow the configured frontend URL and the Vercel production domain
-allowed_origins = [settings.FRONTEND_URL, "https://automated-review-generator.vercel.app"]
+allowed_origins = [settings.FRONTEND_URL, "https://feedback.bdcode.in"]
 if settings.ENVIRONMENT == "development":
     allowed_origins.extend([
         "http://localhost:4003",
