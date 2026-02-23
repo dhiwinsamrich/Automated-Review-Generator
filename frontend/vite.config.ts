@@ -20,6 +20,7 @@ export default defineConfig(() => ({
   preview: {
     host: "::",
     port: 4003,
+    allowedHosts: ["feedback.bdcode.in"],
   },
   plugins: [react()],
   resolve: {
