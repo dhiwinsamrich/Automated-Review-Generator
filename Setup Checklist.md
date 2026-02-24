@@ -450,7 +450,7 @@ RATING_THRESHOLD=8.0
 
 # --- Application ---
 APP_BASE_URL=http://localhost:8000
-FRONTEND_URL=https://automated-review-generator.vercel.app
+FRONTEND_URL=https://feedback.bdcode.in
 
 # --- Webhook Security ---
 WEBHOOK_SECRET=
