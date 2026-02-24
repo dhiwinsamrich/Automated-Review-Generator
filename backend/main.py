@@ -59,7 +59,7 @@ app = FastAPI(
 
 settings = get_settings()
 
-# Always allow the configured frontend URL and the Vercel production domain
+# Always allow the configured frontend URL and the production domain
 allowed_origins = [settings.FRONTEND_URL, "https://feedback.bdcode.in"]
 if settings.ENVIRONMENT == "development":
     allowed_origins.extend([
