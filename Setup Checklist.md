@@ -368,7 +368,7 @@ ngrok http 8000
 ```
 
 - [ ] Backend running on `http://localhost:8000`
-- [ ] Frontend running on Vercel: `https://automated-review-generator.vercel.app`
+- [ ] Frontend running on : `https://feedback.bdcode.in/`
 - [ ] ngrok tunnel active (if testing with Google Apps Script)
 
 ---
