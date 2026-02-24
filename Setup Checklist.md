@@ -393,7 +393,7 @@ curl -X POST http://localhost:8000/api/webhook/form ^
 ```
 
 ### Landing Page
-Open [https://automated-review-generator.vercel.app/review/test-token](https://automated-review-generator.vercel.app/review/test-token) — will show error until real data exists.
+Open [https://feedback.bdcode.in/review/test-token](https://feedback.bdcode.in/review/test-token) — will show error until real data exists.
 
 ### End-to-End Test
 1. Submit the Google Form with a test response
